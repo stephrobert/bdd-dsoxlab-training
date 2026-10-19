@@ -1,0 +1,34 @@
+# Surcharge française du catalogue. Elle ne porte QUE `repo.title`,
+# `repo.description`, et les `title` / `description` des sections, appariés
+# par `id` et non par position.
+#
+# La langue par défaut de l'outil est l'anglais : `meta.yml` porte donc
+# l'anglais, et ce fichier le français.
+
+repo:
+  title: "Formation Administrer une base de données : installer, sécuriser, protéger, répliquer PostgreSQL"
+  description: |
+    Les labs de la formation « Administrer une base de données ». Le niveau 1
+    met en service une instance PostgreSQL sûre : l'installer depuis le dépôt
+    PGDG, l'administrer avec psql, la configurer, contrôler l'accès, puis
+    sauvegarder et restaurer une base. Le niveau 2 la protège et l'exploite :
+    sauvegarde physique et restauration à un instant donné, pgBackRest,
+    supervision, maintenance, montées de version et incidents. Le niveau 3 la
+    réplique et la rend disponible : réplication en flux, point d'entrée
+    stable, Patroni, réplication logique.
+
+    Chaque lab est noté sur l'état du système, jamais sur les commandes
+    tapées : les tests lisent la version que le serveur exécute vraiment, les
+    paramètres qu'il applique vraiment, les sockets sur lesquelles il écoute
+    vraiment, et ce qui survit à un redémarrage.
+
+sections:
+  - id: niveau-1
+    title: "Niveau 1 : mettre en service une base sûre"
+    description: "Installer PostgreSQL depuis le dépôt PGDG, l'administrer avec psql, le configurer, contrôler l'accès et sauvegarder une base. Les autres labs du niveau s'ajoutent à mesure qu'ils sont écrits et prouvés."
+  - id: niveau-2
+    title: "Niveau 2 : protéger et exploiter"
+    description: "Sauvegarde physique et restauration à un instant donné, pgBackRest, supervision, maintenance, montées de version et incidents. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."
+  - id: niveau-3
+    title: "Niveau 3 : répliquer et rendre disponible"
+    description: "Réplication en flux, point d'entrée stable, haute disponibilité avec Patroni et réplication logique. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."

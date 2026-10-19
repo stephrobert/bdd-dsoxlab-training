@@ -1,0 +1,9 @@
+# Surcharges françaises : `title` et `description` seulement. Tout autre champ
+# y serait ignoré en silence.
+title: "Installer PostgreSQL 18 depuis le dépôt PGDG"
+description: |
+  Mettre en service une instance PostgreSQL 18 sur une machine Debian 13
+  vierge, depuis le dépôt de paquets du projet et non depuis celui de la
+  distribution. La note porte sur ce que la machine exécute vraiment : le
+  dépôt et sa clé, la version installée, le cluster qui démarre au boot, les
+  sommes de contrôle des données et les adresses d'écoute du serveur.

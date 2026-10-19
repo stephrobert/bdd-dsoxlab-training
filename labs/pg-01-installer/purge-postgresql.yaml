@@ -1,0 +1,49 @@
+---
+# Défait tout ce que l'installation de PostgreSQL pose : paquets, grappes,
+# données, dépôt PGDG et clé. Partagé par setup.yaml et cleanup.yaml pour que
+# les deux ne divergent jamais.
+- name: Arrêter les unités PostgreSQL si elles existent
+  ansible.builtin.shell:
+    cmd: |
+      systemctl list-units --all --plain --no-legend 'postgresql*' \
+        | awk '{print $1}' | xargs -r systemctl stop
+    executable: /bin/bash
+  changed_when: false
+  failed_when: false
+
+- name: Purger les paquets postgresql
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      pkgs=$(dpkg-query -W -f='${binary:Package}\n' 'postgresql*' 'libpq5' 2>/dev/null || true)
+      if [ -n "$pkgs" ]; then
+        DEBIAN_FRONTEND=noninteractive apt-get purge -y -qq $pkgs
+      fi
+    executable: /bin/bash
+  changed_when: false
+
+- name: Retirer les données et la configuration restantes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/postgresql
+    - /etc/postgresql
+    - /var/log/postgresql
+    - /usr/share/postgresql-common/pgdg
+
+- name: Retirer tout fichier de dépôt qui pointe vers apt.postgresql.org
+  ansible.builtin.shell:
+    cmd: |
+      grep -rl 'apt.postgresql.org' /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null \
+        | grep -v '^/etc/apt/sources.list$' | xargs -r rm -f
+      rm -f /etc/apt/trusted.gpg.d/*pgdg* /etc/apt/trusted.gpg.d/*postgresql* \
+            /etc/apt/keyrings/*postgresql* /etc/apt/keyrings/*pgdg* \
+            /usr/share/keyrings/*postgresql* /usr/share/keyrings/*pgdg*
+    executable: /bin/bash
+  changed_when: false
+
+- name: Rafraîchir l'index sans le dépôt PGDG
+  ansible.builtin.apt:
+    update_cache: true
+    autoremove: true

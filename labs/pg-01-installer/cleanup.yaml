@@ -1,0 +1,11 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL. Les données (`/var/lib/postgresql`) partent aussi : une grappe qui
+# survivrait ferait passer le test des sommes de contrôle sans que l'apprenant
+# ait créé quoi que ce soit.
+- name: Défaire le lab pg-01-installer
+  hosts: lab_target
+  become: true
+  tasks:
+    - name: Purger PostgreSQL, ses données, le dépôt PGDG et sa clé
+      ansible.builtin.include_tasks: purge-postgresql.yaml

@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/stephrobert/dsoxlab/main/schemas/lab.schema.json
+#
+# Canonique en anglais, comme le contrat l'exige. `lab.fr.yaml` surcharge le
+# titre et la description pour le lecteur francophone, et rien d'autre.
+id: pg-01-installer
+title: "Install PostgreSQL 18 from the PGDG repository"
+description: |
+  Put a PostgreSQL 18 instance into service on a bare Debian 13 machine, from
+  the project's own package repository and not from the distribution's. Graded
+  on what the machine really runs: the repository and its key, the installed
+  version, the cluster that starts at boot, the data checksums and the
+  addresses the server listens on.
+section: niveau-1
+level: niveau-1
+lab_type: lab
+difficulty: beginner
+estimated_time: "30m"
+skills:
+  - postgresql
+  - apt
+  - systemd
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/installation/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  # Un service « actif » n'est pas un service « activé » : seul un redémarrage
+  # de la machine distingue l'un de l'autre.
+  persistence_after_reboot: true

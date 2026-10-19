@@ -1,0 +1,26 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# Pose une machine VIERGE de PostgreSQL : c'est la situation du scénario. Le
+# setup n'installe volontairement ni le dépôt PGDG ni la clé ni le moindre
+# paquet postgresql : ce serait faire le travail à la place de l'apprenant, et
+# les tests seraient verts sans rien faire.
+#
+# Il pose seulement les deux outils dont l'étape « récupérer la clé » a besoin
+# (prérequis déclaré du lab, pas son objet), et purge tout reste d'un jeu
+# précédent pour que le lab se rejoue à l'identique.
+- name: Préparer le lab pg-01-installer
+  hosts: lab_target
+  become: true
+  tasks:
+    - name: Installer curl et ca-certificates (prérequis, pas l'objet du lab)
+      ansible.builtin.apt:
+        name:
+          - curl
+          - ca-certificates
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Retirer tout reste de PostgreSQL et du dépôt PGDG
+      ansible.builtin.include_tasks: purge-postgresql.yaml

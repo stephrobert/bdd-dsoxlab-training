@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/stephrobert/dsoxlab/main/schemas/meta.schema.json
+#
+# Catalogue bdd-dsoxlab-training, décrit par le contrat v1 de dsoxlab.
+#
+# Les labs de la formation « Administrer une base de données » du blog.
+# Tout tourne en machine virtuelle : dépôts de paquets, unités systemd,
+# disque rempli, coupure brutale d'un primaire. Un conteneur qui démarre ne
+# prouve rien de cela.
+#
+# UN LAB ENTRE DANS CETTE LISTE LE JOUR OÙ IL EST ÉCRIT ET JOUÉ, PAS AVANT :
+# `validate-structure` refuse un lab déclaré dont le `lab.yaml` n'existe pas.
+#
+# L'ORDRE DES HÔTES EST CONTRACTUEL : l'adresse IP d'une machine dérive de sa
+# position dans la liste (db1 = .11, db2 = .12, db3 = .13 si la base est .10).
+# Ajouter un hôte AU MILIEU déplacerait les adresses des suivants.
+#
+# `repo.id` sert de clé pour l'état local de ce catalogue : le changer
+# déplace ces emplacements.
+schema_version: 1
+
+repo:
+  id: bdd-dsoxlab-training
+  category: bdd-dsoxlab-training
+  title: "Administer a database: install, secure, protect, replicate PostgreSQL"
+  blog_url: "https://www.stephane-robert.info/docs/services/bdd/"
+  description: |
+    Labs for the "Administer a database" course. Level one puts a safe
+    PostgreSQL instance into service: install it from the PGDG repository,
+    administer it with psql, configure it, control access, and back up and
+    restore a database. Level two protects and runs it: physical backups and
+    point-in-time recovery, pgBackRest, monitoring, maintenance, major
+    upgrades and incidents. Level three replicates it and makes it available:
+    streaming replication, a stable entry point, Patroni, logical replication.
+
+    Every lab is graded on the state of the system, never on the commands
+    typed: the tests read the version the server really runs, the settings it
+    really applies, the sockets it really listens on, and what survives a
+    restart.
+
+# Où remettre une preuve d'apprentissage, si ce catalogue a un portail. En
+# `https` : le lien porte les résultats d'un apprenant. dsoxlab n'envoie rien :
+# il affiche une adresse, et l'apprenant décide.
+#
+# learning:
+#   portal_url: https://formation.example.org/mon-apprentissage/
+
+infra:
+  provider:
+    - kvm
+    - incus
+  # `lab-bdd` donne le pont `virbr-bdd`. CIDR déjà pris : 10.10.20, 30, 40, 50,
+  # 60, 70, 80, 90 et 110.
+  network: lab-bdd
+  cidr: 10.10.100.0/24
+  hosts:
+    - name: db1.lab
+      distro: debian13
+      role: db
+      ram_mb: 2048
+      vcpu: 2
+      disk_gb: 20
+    - name: db2.lab
+      distro: debian13
+      role: db
+      ram_mb: 2048
+      vcpu: 2
+      disk_gb: 20
+    - name: db3.lab
+      distro: debian13
+      role: db
+      ram_mb: 2048
+      vcpu: 2
+      disk_gb: 20
+
+sections:
+  - id: niveau-1
+    title: "Level 1: put a safe database into service"
+    description: "Install PostgreSQL from the PGDG repository, administer it with psql, configure it, control access and back up a database. Other labs of the level are added as they are written and proven."
+    labs:
+      - pg-01-installer
+  - id: niveau-2
+    title: "Level 2: protect and run"
+    description: "Physical backups and point-in-time recovery, pgBackRest, monitoring, maintenance, major upgrades and incidents. Labs are added as they are written and proven."
+    labs: []
+  - id: niveau-3
+    title: "Level 3: replicate and make available"
+    description: "Streaming replication, a stable entry point, high availability with Patroni and logical replication. Labs are added as they are written and proven."
+    labs: []
