@@ -142,9 +142,29 @@ def test_cluster_en_ligne_et_active_au_demarrage(db1) -> None:
         fr="L'unité postgresql n'est pas activée : l'instance ne reviendra pas au boot.",
     )
     start = db1.file(f"/etc/postgresql/{MAJEURE}/main/start.conf")
-    assert start.exists and start.content_string.strip().startswith("auto"), message(
-        en="The cluster is not set to `auto` in start.conf.",
-        fr="Le cluster n'est pas en `auto` dans start.conf.",
+    assert start.exists, message(
+        en=f"start.conf is missing for the {MAJEURE}/main cluster.",
+        fr=f"start.conf est absent pour le cluster {MAJEURE}/main.",
+    )
+    # La VALEUR, pas le premier octet du fichier : `start.conf` livré par
+    # postgresql-common commence par dix lignes de commentaires qui décrivent
+    # les trois modes, et la valeur effective vient après. Un
+    # `content_string.strip().startswith("auto")` est donc toujours faux, même
+    # sur un cluster correctement réglé : le test exigeait l'impossible, et ce
+    # lab ne pouvait pas être attesté.
+    mode = next(
+        (
+            ligne.strip()
+            for ligne in start.content_string.splitlines()
+            if ligne.strip() and not ligne.strip().startswith("#")
+        ),
+        "",
+    )
+    assert mode == "auto", message(
+        en=f"start.conf declares `{mode or 'nothing'}`, not `auto`: the cluster "
+        "will not come back at boot.",
+        fr=f"start.conf déclare `{mode or 'rien'}`, pas `auto` : le cluster ne "
+        "reviendra pas au boot.",
     )
 
 
