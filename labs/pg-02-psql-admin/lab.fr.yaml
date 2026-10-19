@@ -1,0 +1,10 @@
+# Surcharge française : le titre et la description, et rien d'autre. Tout autre
+# champ écrit ici est ignoré par le moteur.
+title: "Piloter une instance PostgreSQL avec psql, par la socket et par le réseau"
+description: |
+  Joindre une instance qui tourne de deux façons, lire ses réglages et son
+  catalogue réels, et créer les objets dont un service a besoin. Noté sur
+  l'état de la machine : les adresses écoutées, un `.pgpass` dont les
+  permissions permettent vraiment à psql de l'honorer, une connexion réseau
+  sans mot de passe tapé, les objets réellement présents dans le catalogue, et
+  un rapport dont les valeurs sont comparées à ce que le serveur répond.

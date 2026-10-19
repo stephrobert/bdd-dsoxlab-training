@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/stephrobert/dsoxlab/main/schemas/lab.schema.json
+#
+# Canonique en anglais, comme le contrat l'exige. `lab.fr.yaml` surcharge le
+# titre et la description pour le lecteur francophone, et rien d'autre.
+id: pg-02-psql-admin
+title: "Drive a PostgreSQL instance with psql, over both socket and TCP"
+description: |
+  Connect to a running instance two ways, read its real settings and catalog,
+  and create the objects a service needs. Graded on the machine's state: the
+  listening addresses, a `.pgpass` whose permissions psql will actually honour,
+  a password-free TCP connection, the objects really present in the catalog,
+  and a report whose values are compared with what the server answers.
+section: niveau-1
+level: niveau-1
+lab_type: lab
+difficulty: beginner
+estimated_time: "30m"
+skills:
+  - postgresql
+  - psql
+  - sql
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  # Le serveur doit accepter une connexion réseau, ce qui se règle dans deux
+  # fichiers et non un : `listen_addresses` ouvre la porte, `pg_hba.conf` dit
+  # qui entre.
+  security: true
+  persistence_after_reboot: false

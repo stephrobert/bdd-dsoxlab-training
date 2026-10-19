@@ -1,0 +1,128 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session : il pose la situation que
+# le scénario décrit.
+#
+# CE QUE CE SETUP DONNE, ET CE QU'IL NE DONNE PAS
+#
+# Il donne une instance PostgreSQL 18 qui tourne, un rôle applicatif avec son
+# mot de passe, et une base vide. C'est le point de départ du lab précédent,
+# pg-01-installer : on ne redemande pas d'installer.
+#
+# Il ne donne RIEN de ce que le lab demande : le serveur n'écoute que sur sa
+# boucle locale, `pg_hba.conf` ne connaît pas la connexion réseau, il n'y a ni
+# `.pgpass` ni objet applicatif, et le rapport est vide. Tout cela est le
+# travail.
+- name: Préparer le lab pg-02-psql-admin
+  hosts: lab_target
+  become: true
+  vars:
+    majeure: "18"
+    role_applicatif: appli
+    mot_de_passe: "Ch4ngeMoi!2026"
+    base: facturation
+  tasks:
+
+    # ── L'instance, comme pg-01 la laisse ─────────────────────────────────
+    - name: Installer gnupg pour contrôler l'empreinte de la clé
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+        update_cache: true
+
+    - name: Récupérer la clé du dépôt PGDG
+      ansible.builtin.get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /etc/apt/keyrings/pgdg.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt PGDG, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: pgdg
+        types: deb
+        uris: https://apt.postgresql.org/pub/repos/apt
+        suites: "{{ ansible_facts['distribution_release'] }}-pgdg"
+        components: main
+        signed_by: /etc/apt/keyrings/pgdg.asc
+        state: present
+
+    - name: Installer PostgreSQL {{ majeure }} et le client Python
+      ansible.builtin.apt:
+        name:
+          - "postgresql-{{ majeure }}"
+          - python3-psycopg2
+        state: present
+        update_cache: true
+
+    - name: Démarrer le cluster et l'activer au démarrage
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    # ── Le rôle et la base que l'apprenant devra joindre ──────────────────
+    #
+    # `sudo -u postgres psql` plutôt que `become_user: postgres` : passer de
+    # root à un utilisateur non privilégié demande à Ansible un répertoire
+    # temporaire que ce dernier puisse lire, et il refuse sans ACL. pg-01 reste
+    # root pour la même raison, et les tests de ce lab lisent le serveur par le
+    # même chemin.
+    - name: Créer le rôle applicatif avec son mot de passe
+      ansible.builtin.command:
+        cmd: >
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -c
+          "do $$ begin
+             if not exists (select 1 from pg_roles where rolname = '{{ role_applicatif }}')
+             then create role {{ role_applicatif }} login password '{{ mot_de_passe }}';
+             end if;
+           end $$;"
+      changed_when: false
+
+    - name: Créer la base applicative, dont le rôle est propriétaire
+      ansible.builtin.shell:
+        cmd: >
+          sudo -u postgres psql -X -At -c
+          "select 1 from pg_database where datname = '{{ base }}'" | grep -q 1
+          || sudo -u postgres createdb -O {{ role_applicatif }} {{ base }}
+        executable: /bin/bash
+      changed_when: false
+
+    # ── Le point de départ : rien n'est ouvert, rien n'est rempli ─────────
+    - name: Remettre l'écoute sur la seule boucle locale
+      ansible.builtin.lineinfile:
+        path: "/etc/postgresql/{{ majeure }}/main/postgresql.conf"
+        regexp: "^#?listen_addresses"
+        line: "listen_addresses = 'localhost'"
+        state: present
+      notify: Redémarrer PostgreSQL
+
+    - name: Retirer un éventuel .pgpass d'un passage précédent
+      ansible.builtin.file:
+        path: /home/student/.pgpass
+        state: absent
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-psql.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport d'administration de l'instance.
+          #
+          # Remplace les quatre VOTRE_REPONSE_ICI par ce que le serveur
+          # répond VRAIMENT. Les valeurs sont comparées à ce qu'il déclare :
+          # recopier une valeur plausible ne passe pas.
+          #
+          # Ne supprime pas ces lignes d'en-tête : elles sont la preuve que
+          # tu as édité ce fichier au lieu de le recréer.
+
+          server_version = VOTRE_REPONSE_ICI
+          listen_addresses = VOTRE_REPONSE_ICI
+          data_checksums = VOTRE_REPONSE_ICI
+          nb_tables_schema_appli = VOTRE_REPONSE_ICI
+
+  handlers:
+    - name: Redémarrer PostgreSQL
+      ansible.builtin.systemd:
+        name: "postgresql@{{ majeure }}-main"
+        state: restarted

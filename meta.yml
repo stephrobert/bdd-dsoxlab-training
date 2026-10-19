@@ -81,7 +81,8 @@ sections:
   - id: niveau-2
     title: "Level 2: protect and run"
     description: "Physical backups and point-in-time recovery, pgBackRest, monitoring, maintenance, major upgrades and incidents. Labs are added as they are written and proven."
-    labs: []
+    labs:
+      - pg-02-psql-admin
   - id: niveau-3
     title: "Level 3: replicate and make available"
     description: "Streaming replication, a stable entry point, high availability with Patroni and logical replication. Labs are added as they are written and proven."

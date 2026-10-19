@@ -1,0 +1,53 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL, comme le fait pg-01.
+#
+# POURQUOI PURGER ET NON DÉFAIRE
+#
+# Le setup de ce lab installe l'instance. Un nettoyage qui se contenterait de
+# refermer l'écoute et d'effacer le `.pgpass` laisserait la grappe, ses données
+# et le dépôt : le prochain `run` repartirait d'un état que l'apprenant n'a pas
+# construit, et plusieurs tests passeraient avant tout travail.
+- name: Défaire le lab pg-02-psql-admin
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le fichier de mots de passe de student
+      ansible.builtin.file:
+        path: /home/student/.pgpass
+        state: absent
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-psql.txt
+        state: absent
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc
