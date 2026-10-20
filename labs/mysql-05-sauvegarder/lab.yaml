@@ -1,0 +1,36 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: mysql-05-sauvegarder
+title: "Produce a logical backup that is complete, and prove it by restoring it"
+description: |
+  Dump the `appli` database, restore it into a fresh one, and prove the copy is
+  usable: same rows, the stored procedure CALLABLE, the trigger firing. Graded
+  on the restored server and on the dump file, never on a command line. The
+  trap is measured: `mysqldump` reports `routines FALSE`, so a dump taken
+  without `--routines` silently omits stored procedures, and the restore still
+  succeeds with exit code 0.
+section: mysql-niveau-1
+level: mysql-niveau-1
+lab_type: lab
+difficulty: intermediate
+estimated_time: "35m"
+skills:
+  - mysql
+  - sauvegarde
+  - restauration
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/sauvegarde-restauration/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false
