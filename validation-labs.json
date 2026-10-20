@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-20 08:01:55",
+  "genere_le": "2026-10-20 09:30:52",
   "act": "act version 0.2.84",
   "dsoxlab": "dsoxlab 0.5.5",
   "labs": {
@@ -10,8 +10,21 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 75.3,
+      "duree_s": 78.8,
       "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-20"
+    },
+    "mysql-02-client-admin": {
+      "id": "mysql-02-client-admin",
+      "chemin": "mysql-02-client-admin",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "8/8",
+      "duree_s": 126.8,
+      "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
       "date": "2026-10-20"
     },
@@ -34,10 +47,13 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 85.0,
+      "duree_s": 136.5,
       "traces": [],
+      "traces_etrangeres": [
+        "etranger-preuve-pilote"
+      ],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-03-configurer": {
       "id": "pg-03-configurer",

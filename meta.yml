@@ -21,7 +21,7 @@ schema_version: 1
 repo:
   id: bdd-dsoxlab-training
   category: bdd-dsoxlab-training
-  title: "Administer a database: install, secure, protect and replicate PostgreSQL and MySQL"
+  title: "Administer a relational database: install, secure, protect and replicate PostgreSQL and MySQL"
   blog_url: "https://www.stephane-robert.info/docs/services/bdd/"
   description: |
     Labs for the "Administer a database" course. Level one puts a safe
@@ -99,3 +99,4 @@ sections:
     description: "Install MySQL 8.4 LTS from the Oracle repository, drive it with the mysql client and MySQL Shell, configure it, control access with roles and TLS, and back it up logically. A parallel track to the PostgreSQL one: pick an engine, you do not go through one to reach the other. Labs are added as they are written and proven."
     labs:
       - mysql-01-installer
+      - mysql-02-client-admin

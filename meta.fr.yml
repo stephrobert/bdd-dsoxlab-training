@@ -6,7 +6,7 @@
 # l'anglais, et ce fichier le français.
 
 repo:
-  title: "Formation Administrer une base de données : installer, sécuriser, protéger, répliquer PostgreSQL"
+  title: "Formation Administrer une base de données relationnelle : installer, sécuriser, protéger, répliquer PostgreSQL et MySQL"
   description: |
     Les labs de la formation « Administrer une base de données ». Le niveau 1
     met en service une instance PostgreSQL sûre : l'installer depuis le dépôt

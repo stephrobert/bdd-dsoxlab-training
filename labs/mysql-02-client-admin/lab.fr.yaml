@@ -1,0 +1,7 @@
+title: "Piloter MySQL depuis le client, sans mot de passe sur la ligne de commande"
+description: |
+  Ranger les identifiants dans un login path, créer les objets de
+  l'application, rallumer le Performance Schema et installer MySQL Shell.
+  Noté sur une connexion qui aboutit vraiment sans mot de passe tapé ni
+  terminal, sur le catalogue, et sur une variable de démarrage qu'un `SET` ne
+  change pas.
