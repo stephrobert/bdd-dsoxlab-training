@@ -271,7 +271,20 @@ def test_un_compte_d_administration_dedie_existe(db1) -> None:
     ce qui est l'objet d'un compte d'administration, et qu'il n'est pas `root`.
     Ces deux points se lisent, et c'est pour eux que ce test existe.
     """
-    assert ADMIN != "root", "le lab ne doit pas demander de travailler en root"
+    # Bilingue bien qu'AUCUN apprenant ne la lise : elle n'échoue que si un
+    # auteur met `root` dans la constante. Le garde-fou `instructor audit`, lui,
+    # ne sait pas distinguer une invariante d'auteur d'un message d'apprenant,
+    # et un compteur qui reste à « 1 reste » apprend à ne plus être lu.
+    assert ADMIN != "root", message(
+        en=(
+            f"The lab asks to work as {ADMIN!r}: it must not ask for root. This is "
+            "an authoring invariant, not something you did."
+        ),
+        fr=(
+            f"Le lab demande de travailler en {ADMIN!r} : il ne doit pas demander "
+            "root. C'est une invariante d'écriture du lab, pas une faute de ta part."
+        ),
+    )
     # `mysql.user.Grant_priv` et NON `information_schema.user_privileges`.
     #
     # Mesuré sur MySQL 8.4 dans un conteneur jetable : « GRANT OPTION »
