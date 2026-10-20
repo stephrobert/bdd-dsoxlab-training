@@ -1,0 +1,47 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# tout serveur de base de données.
+#
+# Le nettoyage est le MÊME travail que la préparation, puisque ce lab porte
+# sur l'installation : l'état de départ est l'absence de serveur. Les deux
+# playbooks se ressemblent donc, et c'est normal plutôt que redondant.
+- name: Défaire le lab mysql-01-installer
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-installation.txt
+        state: absent
+
+    - name: Arrêter et désactiver les services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - mysql
+        - mariadb
+      failed_when: false
+
+    - name: Purger MySQL et MariaDB
+      ansible.builtin.shell:
+        cmd: 'DEBIAN_FRONTEND=noninteractive apt-get purge -y "mysql-*" "mariadb-*" 2>/dev/null; DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Effacer données, configuration, dépôt et clé
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/mysql
+        - /etc/mysql
+        - /var/log/mysql
+        - /etc/apt/sources.list.d/mysql.list
+        - /etc/apt/sources.list.d/mysql.sources
+        - /etc/apt/keyrings/mysql.asc
+        - /etc/apt/trusted.gpg.d/mysql.gpg
+        - /root/.my.cnf
+        - /home/student/.my.cnf

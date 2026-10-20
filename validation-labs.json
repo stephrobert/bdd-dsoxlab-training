@@ -1,8 +1,20 @@
 {
-  "genere_le": "2026-10-19 23:25:11",
+  "genere_le": "2026-10-20 08:01:55",
   "act": "act version 0.2.84",
-  "dsoxlab": "dsoxlab 0.5.4",
+  "dsoxlab": "dsoxlab 0.5.5",
   "labs": {
+    "mysql-01-installer": {
+      "id": "mysql-01-installer",
+      "chemin": "mysql-01-installer",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "8/8",
+      "duree_s": 75.3,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-20"
+    },
     "pg-01-installer": {
       "id": "pg-01-installer",
       "chemin": "pg-01-installer",

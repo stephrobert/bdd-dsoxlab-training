@@ -24,11 +24,14 @@ repo:
 
 sections:
   - id: niveau-1
-    title: "Niveau 1 : mettre en service une base sûre"
+    title: "PostgreSQL, niveau 1 : mettre en service une base sûre"
     description: "Installer PostgreSQL depuis le dépôt PGDG, l'administrer avec psql, le configurer, contrôler l'accès et sauvegarder une base. Les autres labs du niveau s'ajoutent à mesure qu'ils sont écrits et prouvés."
   - id: niveau-2
-    title: "Niveau 2 : protéger et exploiter"
+    title: "PostgreSQL, niveau 2 : protéger et exploiter"
     description: "Sauvegarde physique et restauration à un instant donné, pgBackRest, supervision, maintenance, montées de version et incidents. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."
   - id: niveau-3
-    title: "Niveau 3 : répliquer et rendre disponible"
+    title: "PostgreSQL, niveau 3 : répliquer et rendre disponible"
     description: "Réplication en flux, point d'entrée stable, haute disponibilité avec Patroni et réplication logique. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."
+  - id: mysql-niveau-1
+    title: "MySQL, niveau 1 : mettre en service une instance sûre"
+    description: "Installer MySQL 8.4 LTS depuis le dépôt Oracle, le piloter avec le client mysql et MySQL Shell, le configurer, contrôler l'accès par rôles et TLS, et le sauvegarder en logique. Un parcours PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas l'un pour atteindre l'autre. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."

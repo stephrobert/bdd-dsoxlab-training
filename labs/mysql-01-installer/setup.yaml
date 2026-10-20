@@ -1,0 +1,78 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE SETUP NE DONNE RIEN, ET C'EST LE SUJET
+#
+# Le lab porte sur l'installation : la machine doit donc être vierge de tout
+# serveur de base de données. Ce playbook défait ce qu'un passage précédent
+# aurait laissé, et dépose le rapport. Rien d'autre.
+#
+# Il purge AUSSI MariaDB, que le dépôt de Debian livre sous des noms de
+# paquets voisins : un apprenant qui se trompe de dépôt installe MariaDB, et
+# le prochain passage doit repartir d'une machine propre, pas d'un mélange.
+- name: Préparer le lab mysql-01-installer
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Arrêter les services d'un passage précédent
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+      loop:
+        - mysql
+        - mariadb
+      failed_when: false
+
+    - name: Purger MySQL et MariaDB
+      ansible.builtin.shell:
+        cmd: 'DEBIAN_FRONTEND=noninteractive apt-get purge -y "mysql-*" "mariadb-*" 2>/dev/null; DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Effacer données, configuration, dépôt et clé
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/mysql
+        - /etc/mysql
+        - /var/log/mysql
+        - /etc/apt/sources.list.d/mysql.list
+        - /etc/apt/sources.list.d/mysql.sources
+        - /etc/apt/keyrings/mysql.asc
+        - /etc/apt/trusted.gpg.d/mysql.gpg
+        - /root/.my.cnf
+        - /home/student/.my.cnf
+
+    - name: Oublier les réponses debconf d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'echo PURGE | debconf-communicate mysql-community-server 2>/dev/null; echo PURGE | debconf-communicate mysql-apt-config 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Rafraîchir le cache APT, sans le dépôt d'Oracle
+      ansible.builtin.apt:
+        update_cache: true
+      failed_when: false
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-installation.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport d'installation de MySQL.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que le SERVEUR
+          # repond, non avec ce qu'un fichier declare. Les lignes de
+          # commentaire ne sont pas lues par le test : seules les lignes
+          # « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          version_du_serveur = A_COMPLETER
+          bind_address_en_service = A_COMPLETER
+          mysqlx_bind_address_en_service = A_COMPLETER

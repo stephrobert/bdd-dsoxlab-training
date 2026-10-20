@@ -1,0 +1,7 @@
+title: "Installer MySQL 8.4 LTS, et fermer la porte que les paquets laissent ouverte"
+description: |
+  Installer MySQL 8.4 LTS depuis le dépôt Oracle, clé contrôlée, puis
+  restreindre ce qu'il écoute. Noté sur l'écoute RÉELLE relevée par `ss`, et
+  non sur un fichier de configuration : les paquets Oracle ne livrent aucune
+  ligne `bind-address`, la variable vaut `*` par défaut, et `bind-address`
+  seule ne restreint pas le port 33060, qui a sa propre variable.
