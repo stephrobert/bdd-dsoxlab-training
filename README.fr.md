@@ -2,28 +2,52 @@
 
 **Langue :** [English](./README.md) · [Français](./README.fr.md)
 
-À REMPLIR : un paragraphe. Ce que ce catalogue apprend, et à qui.
+Neuf labs pour mettre une instance PostgreSQL en production et la tenir :
+l'installer, la piloter, la configurer, la durcir, la sauvegarder,
+l'observer, la récupérer après une erreur, et la répliquer. Écrit pour les
+administrateurs et les ingénieurs DevOps qui seront d'astreinte sur une
+base qu'ils n'ont pas conçue.
 
 ## Ce que c'est
 
-À REMPLIR : ce qu'un apprenant saura faire à la fin et ne savait pas faire au
-début. Dis-le en capacité, pas en liste de sujets couverts.
+À la fin, un apprenant sait prendre une machine Debian nue et rendre un
+service PostgreSQL qui refuse les connexions en clair, n'accorde pas plus
+de droits que nécessaire, dit ce qu'il fait, survit à une table supprimée,
+et porte un secondaire qui le suit. Chacun de ces points est prouvé par
+des tests qui lisent l'état du système, et non par une liste à cocher.
 
-Dis ici pourquoi les labs sont dans cet ordre, si l'ordre compte.
+**L'ordre compte, et ce n'est pas celui des sujets.** Il suit ce dont une
+machine a besoin pour que l'étape suivante soit seulement possible : une
+instance avant un client, un client avant une configuration, une
+configuration avant un durcissement. Le niveau 2 suppose ensuite un
+service qui tourne et demande ce qui se passe quand il casse ; le niveau 3
+suppose qu'on sait le réparer et demande comment éviter la coupure.
+
+`dsoxlab next` suit cet ordre, dérivé de la position de chaque lab dans le
+`meta.yml`.
 
 ## Prérequis
 
-À REMPLIR, et sois exact : un prérequis absent de cette liste coûte une heure
-de recherche à l'apprenant.
+Un prérequis absent de cette liste coûte une heure de recherche à
+l'apprenant : elle est donc exacte, et mesurée sur le `meta.yml`.
 
 - **Python 3.11+ et [`uv`](https://docs.astral.sh/uv/)**
 - **`git`**
 - **`dsoxlab`**, le moteur, installé en outil autonome (voir plus bas).
-- À REMPLIR : les outils dont les labs ont besoin sur le poste.
+- **`terraform`** et **`ansible-playbook`**, dont tout lab `vm` a besoin
+- **libvirt/KVM 8.0 ou plus**, l'hyperviseur qui porte les machines
 
-À REMPLIR : si ce catalogue a des labs `vm`, nomme l'hyperviseur, la RAM et le
-disque que les machines demandent. S'il n'en a pas, dis-le : `dsoxlab provision`
-n'est alors jamais appelé, et le dire épargne une question au lecteur.
+Rien de PostgreSQL n'est nécessaire sur ton poste : les labs l'installent
+dans les machines virtuelles, depuis le dépôt PGDG, ce qui est justement
+le sujet du premier lab.
+
+**Les neuf labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
+nécessaire. Le catalogue déclare trois machines Debian 13 (`db1.lab`,
+`db2.lab`, `db3.lab`) sur le réseau `lab-bdd`, chacune avec 2 Go de RAM,
+2 vCPU et 20 Go de disque : environ 6 Go de RAM et 60 Go de disque en tout.
+
+Seul `pg-09-repliquer` emploie une seconde machine. `db3.lab` est
+provisionnée mais aucun lab ne s'en sert encore.
 
 `dsoxlab doctor` dit ce dont ce dépôt a besoin et ce dont il n'a pas besoin, et
 distingue un contrôle qui a échoué d'un contrôle qu'il n'a pas pu mesurer.
@@ -103,12 +127,11 @@ dsoxlab progress               # avancement par section, score moyen
 
 ### Les runtimes
 
-À REMPLIR : une ligne par runtime réellement employé par ce catalogue, et ce
-qu'il demande au poste.
+Ce catalogue n'emploie qu'un seul runtime.
 
 | Runtime | Ce que le lab demande |
 |---|---|
-| `shell` | un terminal, et À REMPLIR |
+| `vm` | une ou deux machines Debian 13, provisionnées par `dsoxlab provision`. La session s'ouvre en SSH sur la cible, et les tests lisent l'état du système par `pytest-testinfra`. |
 
 ### Le modèle de validation
 
@@ -121,8 +144,14 @@ Et un lab est prouvé **dans les deux sens** : les tests doivent échouer avant
 le travail et passer après. Un test vert avant le travail n'est pas un test,
 c'est une hypothèse sur le setup.
 
-À REMPLIR : où vivent les solutions de référence, et si elles sont chiffrées.
-Une solution livrée en clair gâche le lab, et git la garde pour toujours.
+Les solutions de référence vivent dans `solution/<lab>/solution.yaml`, et
+les **neuf sont chiffrées** par `ansible-vault`. Une solution livrée en
+clair gâche le lab, et git la garde pour toujours.
+
+`scripts/verify-solutions.py` les déchiffre, les joue sur une machine
+fraîche et exige un score de 100. `scripts/valider-labs.py` va plus loin et
+exige **0 avant le travail et 100 après** : un lab dont les tests passent
+sur l'état de départ ne mesure rien.
 
 ### Score, indices, avancement
 
@@ -137,7 +166,29 @@ Un 0 accuserait le lab de ce qui manque au poste.
 
 ## Catalogue
 
-À REMPLIR : une sous-section par section du `meta.yml`, avec ses labs.
+### Niveau 1 : mettre une base en service, et sûre
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `pg-01-installer` | l'instance vient du dépôt PGDG, et sa clé est contrôlée |
+| `pg-02-psql-admin` | un script se connecte par le réseau sans mot de passe tapé |
+| `pg-03-configurer` | les paramètres sont **effectifs**, et celui qui attend est su comme tel |
+| `pg-04-securiser` | une connexion en clair est **refusée**, et les droits sont séparés |
+| `pg-05-sauvegarder` | la sauvegarde **se restaure**, comparée ligne à ligne |
+
+### Niveau 2 : protéger et exploiter
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `pg-06-observer` | le planificateur a cessé de lire la table en entier, et l'espace mort est revenu |
+| `pg-07-archiver` | des journaux partent vraiment, et la sauvegarde physique est vérifiée |
+| `pg-08-restaurer-pitr` | une table supprimée revient, et la timeline prouve la restauration |
+
+### Niveau 3 : répliquer et rendre disponible
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `pg-09-repliquer` | une ligne écrite sur le primaire est lisible sur le secondaire |
 
 ## Contribuer
 

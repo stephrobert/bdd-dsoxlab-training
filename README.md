@@ -2,29 +2,52 @@
 
 **Language:** [English](./README.md) · [Français](./README.fr.md)
 
-TO FILL IN: one paragraph. What this catalog teaches, and to whom.
+Nine hands-on labs to put a PostgreSQL instance into production and keep
+it there: install it, drive it, configure it, harden it, back it up,
+watch it, recover it after a mistake, and replicate it. Written for
+sysadmins and DevOps engineers who will be on call for a database they
+did not design.
 
 ## What it is
 
-TO FILL IN: what a learner can do at the end that they could not do at the
-start. Say it in terms of capability, not of topics covered.
+At the end, a learner can take a bare Debian machine and return a
+PostgreSQL service that refuses cleartext connections, grants no more
+rights than needed, says what it is doing, survives a dropped table, and
+has a standby following it. Each of those is proven by tests that read the
+system's state, not by a checklist.
 
-Say here why the labs are in this order, if the order matters.
+**The order matters, and it is not the order of the topics.** It follows
+what a machine needs before the next step is even possible: an instance
+before a client, a client before a configuration, a configuration before
+hardening. Level 2 then assumes a running service and asks what happens
+when it breaks; level 3 assumes you can repair one and asks how to avoid
+the outage altogether.
+
+`dsoxlab next` follows that order, derived from the position of each lab
+in `meta.yml`.
 
 ## Requirements
 
-TO FILL IN, and be exact: a requirement that is missing from this list costs
-the learner an hour of searching.
+A missing requirement costs the learner an hour of searching, so this list
+is exact and measured against `meta.yml`.
 
 - **Python 3.11+ and [`uv`](https://docs.astral.sh/uv/)**
 - **`git`**
 - **`dsoxlab`**, the engine, installed as a standalone tool (see below).
-- TO FILL IN: the tools the labs need on the machine.
+- **`terraform`** and **`ansible-playbook`**, which every `vm` lab needs
+- **libvirt/KVM 8.0 or above**, the hypervisor the machines run on
 
-TO FILL IN: whether this catalog has `vm` labs. If it does, name the
-hypervisor, the RAM and the disk the machines need. If it does not, say so:
-`dsoxlab provision` is then never called, and saying it spares the reader a
-question.
+Nothing PostgreSQL-related is needed on your own machine: the labs install
+it inside the virtual machines, from the PGDG repository, which is itself
+the subject of the first lab.
+
+**All nine labs are `vm` labs**, so `dsoxlab provision` is always needed.
+The catalog declares three Debian 13 machines (`db1.lab`, `db2.lab`,
+`db3.lab`) on the `lab-bdd` network, each with 2 GB of RAM, 2 vCPU and
+20 GB of disk: about 6 GB of RAM and 60 GB of disk in all.
+
+Only `pg-09-repliquer` uses a second machine. `db3.lab` is provisioned but
+no lab uses it yet.
 
 `dsoxlab doctor` says what this repository needs and what it does not, and
 tells apart a check that failed from one it could not measure.
@@ -103,12 +126,11 @@ dsoxlab progress               # per-section progress, average score
 
 ### Runtimes
 
-TO FILL IN: one row per runtime this catalog actually uses, and what it asks
-of the machine.
+This catalog uses one runtime only.
 
 | Runtime | What the lab asks for |
 |---|---|
-| `shell` | a terminal, and TO FILL IN |
+| `vm` | one or two Debian 13 machines, provisioned by `dsoxlab provision`. The session opens over SSH on the target, and the tests read the system's state through `pytest-testinfra`. |
 
 ### The validation model
 
@@ -120,8 +142,14 @@ And a lab is proven **in both directions**: the tests must fail before the work
 and pass after it. A test that is green before the work is not a test, it is an
 assumption about the setup.
 
-TO FILL IN: where the reference solutions live, and whether they are encrypted.
-A solution shipped in clear text spoils the lab, and git keeps it forever.
+The reference solutions live in `solution/<lab>/solution.yaml`, and the
+**nine of them are encrypted** with `ansible-vault`. A solution shipped in
+clear text spoils the lab, and git keeps it forever.
+
+`scripts/verify-solutions.py` decrypts them, plays them on a fresh machine
+and requires a score of 100. `scripts/valider-labs.py` goes further and
+requires **0 before the work and 100 after**: a lab whose tests pass on the
+starting state measures nothing.
 
 ### Scoring, hints, progress
 
@@ -136,7 +164,29 @@ lab of what is missing from the machine.
 
 ## Catalog
 
-TO FILL IN: one subsection per section of `meta.yml`, with its labs.
+### Level 1: put a safe database into service
+
+| Lab | What it proves |
+|---|---|
+| `pg-01-installer` | the instance comes from the PGDG repository, and its key is checked |
+| `pg-02-psql-admin` | a script connects over the network without a typed password |
+| `pg-03-configurer` | the parameters are **effective**, and the one that waits is known to wait |
+| `pg-04-securiser` | a cleartext connection is **refused**, and the rights are separated |
+| `pg-05-sauvegarder` | the backup **restores**, compared row by row |
+
+### Level 2: protect and run
+
+| Lab | What it proves |
+|---|---|
+| `pg-06-observer` | the planner stopped reading the table whole, and the dead space came back |
+| `pg-07-archiver` | logs really leave, and the physical backup is verified |
+| `pg-08-restaurer-pitr` | a dropped table comes back, and the timeline proves the recovery |
+
+### Level 3: replicate and make available
+
+| Lab | What it proves |
+|---|---|
+| `pg-09-repliquer` | a row written on the primary is readable on the standby |
 
 ## Contributing
 
