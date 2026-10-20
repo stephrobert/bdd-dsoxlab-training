@@ -1,0 +1,42 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL, comme les labs précédents du catalogue.
+- name: Défaire le lab pg-05-sauvegarder
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-sauvegarde.txt
+        state: absent
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration, les sauvegardes et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /var/backups/postgresql
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc

@@ -363,13 +363,29 @@ def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     return result
 
 
-def _read_lab_runtime(lab_root: Path) -> tuple[str, str | None]:
-    """Lit ``lab.yaml`` et retourne ``(runtime_type, host_or_None)``."""
+def _read_lab_runtime(lab_root: Path) -> tuple[str, str | None, dict[str, str]]:
+    """Lit ``lab.yaml`` et retourne ``(runtime_type, host_or_None, roles)``.
+
+    POURQUOI LES ``roles`` SONT RENDUS AUSSI
+
+    Un lab à plusieurs machines déclare ses machines secondaires dans
+    ``runtime.targets[].roles``, et ``dsoxlab`` en dérive un groupe Ansible
+    ``lab_<role>`` que le playbook cible. Sans eux, ``build_inventory`` ne
+    crée que ``lab_target`` : le play d'un secondaire ne correspond alors à
+    AUCUN hôte, Ansible le saute, et le playbook se termine en succès en
+    n'ayant fait que la moitié du travail.
+
+    Mesuré le 2026-10-19 sur ``pg-09-repliquer`` : la solution préparait le
+    primaire, sautait tout le play du secondaire, puis échouait deux minutes
+    plus tard en attendant un secondaire qui n'avait jamais été construit. Le
+    message parlait d'un flux absent, pas d'un groupe vide.
+    """
     lab_yaml = lab_root / "lab.yaml"
     with lab_yaml.open(encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
     runtime = data.get("runtime") or {}
     host = runtime.get("host")
+    roles: dict[str, str] = {}
     # Labs VM mono/multi-hôte : le host peut vivre dans runtime.targets[].host
     # (schéma des labs l2+). On prend la target ``default`` si déclarée, sinon
     # la première.
@@ -381,7 +397,12 @@ def _read_lab_runtime(lab_root: Path) -> tuple[str, str | None]:
                 (t for t in targets if t.get("name") == default), targets[0]
             )
             host = chosen.get("host")
-    return str(runtime.get("type", "shell")), host
+            roles = {
+                str(nom): str(fqdn)
+                for nom, fqdn in (chosen.get("roles") or {}).items()
+                if fqdn
+            }
+    return str(runtime.get("type", "shell")), host, roles
 
 
 def _replay_shell_solution(lab_root: Path, rel_path: Path) -> None:
@@ -491,7 +512,7 @@ def _apply_lab_state(request) -> None:
     if lab_root is None:
         return  # test hors d'un lab
 
-    runtime_type, host_name = _read_lab_runtime(lab_root)
+    runtime_type, host_name, roles = _read_lab_runtime(lab_root)
 
     # Labs multi-distrib : la solution doit se rejouer sur la MÊME target que
     # celle où portent les tests, sinon on validerait un hôte et on
@@ -542,10 +563,14 @@ def _apply_lab_state(request) -> None:
         pytest.skip(f"[{lab_root.name}] meta.yml introuvable.")
 
     tf_outputs = read_terraform_outputs(repo_meta)
+    # `roles` fait exister les groupes `lab_<role>` : sans eux, le play d'une
+    # machine secondaire ne correspond à aucun hôte et Ansible le saute en
+    # silence, ce qui rend un playbook à moitié joué pour un succès.
     inventory = build_inventory(
         repo_meta,
         terraform_outputs=tf_outputs,
         target_fqdn=host_name,
+        roles=roles or None,
     )
 
     vault_password_file: Path | None = None

@@ -1,0 +1,7 @@
+title: "Rendre le serveur observable, lire un plan, et récupérer l'espace mort"
+description: |
+  Charger `pg_stat_statements`, puis corriger une requête que le
+  planificateur lit séquentiellement, et récupérer l'espace que des
+  suppressions ont laissé mort. Noté sur la réponse du PLANIFICATEUR et sur
+  l'état de la table, jamais sur la présence d'un index : un index que le
+  planificateur ignore ne corrige rien, et c'est le cas le plus fréquent.

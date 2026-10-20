@@ -1,0 +1,8 @@
+title: "Prendre une sauvegarde physique, archiver les WAL en continu, et vérifier les deux"
+description: |
+  Mettre en place l'archivage continu des WAL, prendre une sauvegarde
+  physique, et prouver que les deux tiennent : des fichiers dans l'archive, un
+  compteur qui a bougé, aucun échec d'archivage, et une sauvegarde que
+  `pg_verifybackup` déclare valide. Noté sur le résultat et jamais sur la
+  configuration : l'archivage ne se déclenche qu'à segment WAL complet, donc
+  un serveur correctement réglé mais inactif n'archive rien.

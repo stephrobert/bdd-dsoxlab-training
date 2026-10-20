@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/stephrobert/dsoxlab/main/schemas/lab.schema.json
+#
+# Canonique en anglais, comme le contrat l'exige. `lab.fr.yaml` surcharge le
+# titre et la description pour le lecteur francophone, et rien d'autre.
+id: pg-03-configurer
+title: "Configure memory, connections and logs, and know what reloads"
+description: |
+  Set the parameters an exploitable instance needs, then apply them without
+  cutting a single session. Graded on what the server really answers: the
+  reloadable parameters must be EFFECTIVE and not merely written, the
+  postmaster-context one must be written and still pending, and the server
+  must not have been restarted. A reload never reports a parameter that stayed
+  without effect: only `pending_restart` says so.
+section: niveau-1
+level: niveau-1
+lab_type: lab
+difficulty: intermediate
+estimated_time: "35m"
+skills:
+  - postgresql
+  - configuration
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/configuration/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false

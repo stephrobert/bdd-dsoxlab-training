@@ -1,0 +1,40 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+#
+# Premier lab du catalogue à DEUX machines : `roles.standby` crée le groupe
+# Ansible `lab_standby` et fait entrer db2 dans l'isolation.
+id: pg-09-repliquer
+title: "Stream a standby from a primary, and prove the data flows"
+description: |
+  Build a streaming standby on a second machine: a dedicated replication role
+  that is not a superuser, a physical slot that keeps the WAL, an access rule,
+  and a base copy. Graded on the flow itself: a row written on the primary
+  must be readable on the standby. A correct configuration that streams
+  nothing does not pass.
+section: niveau-3
+level: niveau-3
+lab_type: lab
+difficulty: advanced
+estimated_time: "50m"
+skills:
+  - postgresql
+  - replication
+  - haute-disponibilite
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/replication/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+      roles:
+        standby: db2.lab
+  default: db1
+validation:
+  functional: true
+  security: true
+  persistence_after_reboot: false

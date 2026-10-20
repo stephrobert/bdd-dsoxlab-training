@@ -1,0 +1,7 @@
+title: "Mettre un secondaire en flux depuis un primaire, et prouver que les données coulent"
+description: |
+  Construire un secondaire en flux sur une seconde machine : un rôle de
+  réplication dédié qui n'est pas superutilisateur, un slot physique qui
+  retient les WAL, une règle d'accès, et une copie de base. Noté sur le flux
+  lui-même : une ligne écrite sur le primaire doit être lisible sur le
+  secondaire. Une configuration juste qui ne coule pas ne passe pas.

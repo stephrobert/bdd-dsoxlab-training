@@ -1,0 +1,35 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: pg-07-archiver
+title: "Take a physical backup, archive the WAL continuously, and verify both"
+description: |
+  Set up continuous WAL archiving, take a physical backup, and prove both
+  hold: files in the archive, a counter that moved, no archiving failure, and
+  a backup that `pg_verifybackup` declares valid. Graded on the result, never
+  on the configuration: archiving only fires when a WAL segment is complete,
+  so a correctly configured idle server archives nothing.
+section: niveau-2
+level: niveau-2
+lab_type: lab
+difficulty: advanced
+estimated_time: "45m"
+skills:
+  - postgresql
+  - sauvegarde
+  - wal
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false

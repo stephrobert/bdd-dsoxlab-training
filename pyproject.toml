@@ -5,8 +5,8 @@
 
 [project]
 name = "bdd-dsoxlab-training"
-version = "0.1.0"
-description = "À remplir."
+version = "0.2.0"
+description = "Labs PostgreSQL de la formation, joués par la CLI dsoxlab"
 requires-python = ">=3.11"
 dependencies = [
     "pytest>=9.1.1",
@@ -22,8 +22,48 @@ norecursedirs = ["challenge/work", ".git", ".venv"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = [
+    # Les solutions sont CHIFFRÉES : ruff ne peut pas les lire, et n'a rien à y
+    # dire. Le répertoire de travail de l'apprenant n'est pas du code du dépôt.
+    "solution",
+    "labs/*/challenge/work",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "S"]
-# S101 : `assert` est l'outil de travail d'un test, pas un défaut.
-per-file-ignores = { "labs/**/tests/*.py" = ["S101"], "tests/*.py" = ["S101"] }
+# Le jeu est repris des catalogues frères (iam, kubernetes, terraform) plutôt
+# qu'inventé ici : ces dépôts se relisent les uns les autres, et un
+# contributeur qui passe de l'un à l'autre ne doit pas réapprendre ce qui est
+# accepté. L'écrire dans le dépôt importe aussi parce que les hooks et la CI
+# appellent `uvx ruff`, donc la DERNIÈRE version publiée : sans jeu déclaré,
+# ce que ruff juge change le jour où ruff change d'avis.
+select = [
+    "E4", "E7", "E9", "F",  # les défauts de ruff : erreurs réelles
+    "I",    # imports triés
+    "UP",   # tournures dépassées pour la version cible
+    "B",    # bugbear : les pièges qui se paient à l'exécution
+    "BLE",  # except nu : une exception avalée se paie plus tard
+    "SIM",  # simplifications lisibles
+    "RUF",  # règles propres à ruff
+    "DTZ",  # dates sans fuseau
+    "PLE", "PLW",
+    "S",    # bandit
+]
+ignore = [
+    # Les messages d'assertion ENSEIGNENT : ce sont eux que l'apprenant lit
+    # quand un test échoue. Les couper à 100 colonnes les rendrait moins
+    # lisibles pour gagner une convention de mise en page.
+    "E501",
+    # `assert` est le verbe de pytest.
+    "S101",
+    # Lancer `dsoxlab`, `docker` ou `psql` par leur nom depuis le PATH est le
+    # métier de ces scripts et de ces tests. Coder un chemin absolu les
+    # casserait sur une machine où l'outil vit ailleurs, ce que le contrat
+    # interdit par ailleurs.
+    "S603", "S607",
+    # Le SQL de ces tests est construit à partir de CONSTANTES déclarées en
+    # tête du module (noms de base, de schéma, de table, de rôle), jamais
+    # d'une entrée de l'apprenant : il n'y a pas d'injection possible, et la
+    # règle n'a pas de cas à attraper ici. La forme interpolée est justement
+    # ce qui permet à un message d'échec de nommer l'objet qu'il a interrogé.
+    "S608",
+]

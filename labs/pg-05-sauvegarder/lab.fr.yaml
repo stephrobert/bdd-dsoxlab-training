@@ -1,0 +1,6 @@
+title: "Sauvegarder une base en logique, et prouver que la sauvegarde se restaure"
+description: |
+  Produire un dump au format custom, capturer les rôles globaux au cluster que
+  `pg_dump` laisse de côté, puis restaurer dans une base de vérification et la
+  comparer à l'originale. Noté sur le contenu restauré et non sur l'existence
+  d'un fichier : une sauvegarde non testée n'est pas une sauvegarde.

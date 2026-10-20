@@ -1,0 +1,50 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL, archives, sauvegardes et répertoire écarté compris.
+#
+# La purge est ici indispensable et non confortable : ce lab remplace le
+# répertoire de données de la grappe. Un nettoyage partiel laisserait une
+# grappe restaurée, en timeline 2, avec ses paramètres de restauration en
+# place : le prochain passage partirait d'un état où trois tests sont déjà
+# verts.
+- name: Défaire le lab pg-08-restaurer-pitr
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le rapport et l'instant de sécurité
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /home/student/rapport-restauration.txt
+        - /home/student/instant-de-securite.txt
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration, les archives et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc

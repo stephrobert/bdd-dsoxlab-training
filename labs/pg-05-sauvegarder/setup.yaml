@@ -1,0 +1,155 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE QUE CE SETUP DONNE
+#
+# Une instance PostgreSQL 18, la base `facturation` et son schéma `appli` avec
+# deux tables remplies de valeurs connues, et un répertoire de sauvegarde qui
+# existe et appartient à `postgres`. C'est l'état d'une production dont la
+# tâche de sauvegarde a cessé de tourner sans que rien ne le signale.
+#
+# CE QU'IL NE DONNE PAS, ET QUI EST LE TRAVAIL
+#
+# Le répertoire de sauvegarde est VIDE, et la base de vérification n'existe
+# pas. Aucun dump, aucun fichier de rôles.
+- name: Préparer le lab pg-05-sauvegarder
+  hosts: lab_target
+  become: true
+  vars:
+    majeure: "18"
+    role_applicatif: appli
+    mot_de_passe: "Ch4ngeMoi!2026"
+    base: facturation
+    base_verif: facturation_verif
+    schema: appli
+    depot: /var/backups/postgresql
+  tasks:
+
+    - name: Installer gnupg pour contrôler l'empreinte de la clé
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+        update_cache: true
+
+    - name: Récupérer la clé du dépôt PGDG
+      ansible.builtin.get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /etc/apt/keyrings/pgdg.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt PGDG, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: pgdg
+        types: deb
+        uris: https://apt.postgresql.org/pub/repos/apt
+        suites: "{{ ansible_facts['distribution_release'] }}-pgdg"
+        components: main
+        signed_by: /etc/apt/keyrings/pgdg.asc
+        state: present
+
+    - name: Installer PostgreSQL {{ majeure }}
+      ansible.builtin.apt:
+        name: "postgresql-{{ majeure }}"
+        state: present
+        update_cache: true
+
+    - name: Démarrer le cluster et l'activer au démarrage
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Créer le rôle applicatif
+      ansible.builtin.command:
+        cmd: >
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -c
+          "do $$ begin
+             if not exists (select 1 from pg_roles where rolname = '{{ role_applicatif }}')
+             then create role {{ role_applicatif }} login password '{{ mot_de_passe }}';
+             end if;
+           end $$;"
+      changed_when: false
+
+    # Effacée AVANT que la base de production soit touchée : une base de
+    # vérification laissée par un passage précédent rendrait l'étape 3 verte
+    # sans travail.
+    - name: Effacer la base de vérification d'un passage précédent
+      ansible.builtin.command:
+        cmd: sudo -u postgres dropdb --if-exists {{ base_verif }}
+      changed_when: false
+
+    - name: Créer la base de production, dont le rôle est propriétaire
+      ansible.builtin.shell:
+        cmd: >
+          sudo -u postgres psql -X -At -c
+          "select 1 from pg_database where datname = '{{ base }}'" | grep -q 1
+          || sudo -u postgres createdb -O {{ role_applicatif }} {{ base }}
+        executable: /bin/bash
+      changed_when: false
+
+    # Des valeurs CONNUES et en nombre fixe : c'est ce qui permet de comparer
+    # l'original et la restauration, table par table.
+    - name: Poser le schéma et les deux tables, remplies
+      ansible.builtin.command:
+        cmd: >
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d {{ base }} -c
+          "create schema if not exists {{ schema }} authorization {{ role_applicatif }};
+           create table if not exists {{ schema }}.clients
+             (id serial primary key, nom text not null);
+           create table if not exists {{ schema }}.commandes
+             (id serial primary key, client_id int, montant numeric);
+           insert into {{ schema }}.clients (nom)
+             select x from (values ('Durand'), ('Martin'), ('Nguyen')) as v(x)
+             where not exists (select 1 from {{ schema }}.clients);
+           insert into {{ schema }}.commandes (client_id, montant)
+             select c, m from (values (1, 42.00), (1, 13.50), (2, 99.90),
+                                      (2, 7.25), (3, 310.00)) as v(c, m)
+             where not exists (select 1 from {{ schema }}.commandes);"
+      changed_when: false
+
+    # ── Le répertoire de sauvegarde : il existe, et il est vide ──────────
+    - name: Poser le répertoire de sauvegarde, fermé aux autres comptes
+      ansible.builtin.file:
+        path: "{{ depot }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0750"
+
+    - name: Relever ce qu'un passage précédent y aurait laissé
+      ansible.builtin.find:
+        paths: "{{ depot }}"
+        file_type: any
+      register: residus
+
+    - name: Vider le répertoire de sauvegarde
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ residus.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    # `student` doit pouvoir lancer pg_dump en postgres : le compte est déjà
+    # sudoer sur ces VM, donc rien à ajouter ici. On ne lui ouvre PAS le
+    # répertoire : une sauvegarde se lit par le compte de service.
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-sauvegarde.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport de sauvegarde de la base facturation.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que les fichiers et
+          # la base de verification repondent VRAIMENT. Les lignes de
+          # commentaire ne sont pas lues par le test : seules les lignes
+          # « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          format_du_dump = A_COMPLETER
+          nb_lignes_clients_restaurees = A_COMPLETER
+          nb_roles_sauvegardes = A_COMPLETER

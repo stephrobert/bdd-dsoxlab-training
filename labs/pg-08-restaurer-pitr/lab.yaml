@@ -1,0 +1,37 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: pg-08-restaurer-pitr
+title: "Recover a dropped table by restoring to a point in time"
+description: |
+  A DROP TABLE wiped the production data. Restore the cluster to the instant
+  just before it, from the physical backup and the archived WAL. Graded on the
+  TIMELINE as much as on the data: a completed recovery promotes the cluster
+  and increments its timeline, so recreating the table by hand leaves it at 1
+  and does not pass.
+section: niveau-2
+level: niveau-2
+lab_type: challenge
+difficulty: advanced
+estimated_time: "50m"
+exam_passing_score: 80
+skills:
+  - postgresql
+  - restauration
+  - pitr
+  - incident
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+  snapshot_required: false
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false
