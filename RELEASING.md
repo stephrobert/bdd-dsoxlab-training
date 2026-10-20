@@ -82,7 +82,7 @@ the analysers' scrutiny.
    ```bash
    dsoxlab validate-structure --check-urls
    pre-commit run --all-files --hook-stage pre-push
-   python3 scripts/verify-solutions.py --deux-sens --check
+   python3 scripts/verify-solutions.py --check --negative
    python3 scripts/valider-labs.py      # writes validation-labs.json
    ```
 
@@ -92,9 +92,20 @@ the analysers' scrutiny.
    the site repository (`test-astro-5`, cloned next to this one), run:
 
    ```bash
-   python3 scripts/reattester-labs.py --depot bdd-dsoxlab-training           # plan and safeguards
-   python3 scripts/reattester-labs.py --depot bdd-dsoxlab-training --apply   # replay and commit
+   python3 ../test-astro-5/scripts/reattester-labs.py --depot bdd-dsoxlab-training           # plan and safeguards
+   python3 ../test-astro-5/scripts/reattester-labs.py --depot bdd-dsoxlab-training --apply   # replay and commit
    ```
+
+   The path is given relative to this repository on purpose: the script lives
+   in the site repository, not here, and a command copied from this root would
+   answer `No such file`.
+
+   **Measured on 2026-10-20: the script does not know this catalogue.** Its
+   list of repositories is hardcoded and stops at `mlops-dsoxlab-training`, so
+   it answers `dépôt inconnu` and re-attests nothing. Until it reads the disk
+   instead of a written list, the check has to be replaced by a measurement:
+   for each lab whose verdict predates a change, establish that the change is
+   inert, or replay the lab with `python3 scripts/valider-labs.py --lab <id>`.
 
    The script replays each lab marked "to re-attest" through
    `scripts/valider-labs.py`, one at a time (modified tests and labs first,
