@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-19 21:28:18",
+  "genere_le": "2026-10-19 23:25:11",
   "act": "act version 0.2.84",
   "dsoxlab": "dsoxlab 0.5.4",
   "labs": {
@@ -23,6 +23,90 @@
       "score_apres": 100,
       "tests": "8/8",
       "duree_s": 85.0,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-03-configurer": {
+      "id": "pg-03-configurer",
+      "chemin": "pg-03-configurer",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "9/9",
+      "duree_s": 126.3,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-04-securiser": {
+      "id": "pg-04-securiser",
+      "chemin": "pg-04-securiser",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "12/12",
+      "duree_s": 100.6,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-05-sauvegarder": {
+      "id": "pg-05-sauvegarder",
+      "chemin": "pg-05-sauvegarder",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "9/9",
+      "duree_s": 69.7,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-06-observer": {
+      "id": "pg-06-observer",
+      "chemin": "pg-06-observer",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "7/7",
+      "duree_s": 75.0,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-07-archiver": {
+      "id": "pg-07-archiver",
+      "chemin": "pg-07-archiver",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "8/8",
+      "duree_s": 85.7,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-08-restaurer-pitr": {
+      "id": "pg-08-restaurer-pitr",
+      "chemin": "pg-08-restaurer-pitr",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "8/8",
+      "duree_s": 244.9,
+      "traces": [],
+      "pourquoi": "",
+      "date": "2026-10-19"
+    },
+    "pg-09-repliquer": {
+      "id": "pg-09-repliquer",
+      "chemin": "pg-09-repliquer",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "10/10",
+      "duree_s": 273.7,
       "traces": [],
       "pourquoi": "",
       "date": "2026-10-19"
