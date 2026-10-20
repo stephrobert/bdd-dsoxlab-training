@@ -82,9 +82,27 @@ the analysers' scrutiny.
    ```bash
    dsoxlab validate-structure --check-urls
    pre-commit run --all-files --hook-stage pre-push
-   python3 scripts/verify-solutions.py --check --negative
+   .venv/bin/python scripts/verify-solutions.py --check --negative
    python3 scripts/valider-labs.py      # writes validation-labs.json
    ```
+
+   **The interpreter running `verify-solutions.py` must carry TWO things**:
+   `pytest`, to run the tests, and `dsoxlab`, for the infrastructure probe.
+   Measured on 2026-10-20: run with mise's `python3` it exits 2 without
+   measuring anything; run with a venv that has pytest but not dsoxlab, it
+   announced "infra not provisioned" about an infrastructure that had just
+   carried all fifteen labs. If either is missing, the script says so and
+   names the command that installs it.
+
+   Its exit codes under `--check` read like those of
+   `dsoxlab doctor --strict`:
+
+   | Code | Meaning |
+   | --- | --- |
+   | `0` | everything that had to be measured was, and it is green |
+   | `1` | a reference solution no longer passes its tests |
+   | `2` | the harness itself cannot measure, and it says which part |
+   | `3` | some labs could not be measured, which is not a success |
 
 2. **Re-attest the labs that changed since their verdict.** A lab whose tests,
    files, shared `conftest.py` or descriptors changed after the commit that

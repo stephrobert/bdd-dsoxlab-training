@@ -16,19 +16,25 @@ labs et ses solutions.
 
 ---
 
-## L'état, le 2026-10-19
+## L'état, le 2026-10-20
 
-Neuf labs, **78 tests fonctionnels**, **164 assertions**, **9 solutions sur 9
-chiffrées**. Trois niveaux, dont le troisième vient de s'ouvrir.
+Quinze labs, **131 tests fonctionnels**, **294 assertions**, **15 solutions sur
+15 chiffrées**. Deux moteurs, et le niveau 1 MySQL est complet.
 
-| Niveau | Labs | Sujet |
-| --- | --- | --- |
-| 1 | `pg-01` → `pg-05` | installer, piloter avec psql, configurer, sécuriser, sauvegarder en logique |
-| 2 | `pg-06` → `pg-08` | observer et maintenir, archivage WAL et sauvegarde physique, restauration à un instant donné |
-| 3 | `pg-09` | réplication en flux |
+| Parcours | Niveau | Labs | Sujet |
+| --- | --- | --- | --- |
+| PostgreSQL | 1 | `pg-01` → `pg-05` | installer, piloter avec psql, configurer, sécuriser, sauvegarder en logique |
+| PostgreSQL | 2 | `pg-06` → `pg-08` | observer et maintenir, archivage WAL et sauvegarde physique, restauration à un instant donné |
+| PostgreSQL | 3 | `pg-09` | réplication en flux |
+| MySQL | 1 | `mysql-01` → `mysql-05` et `mysql-epreuve-n1` | installer, piloter le client et MySQL Shell, configurer avec persistance, accorder par rôles avec TLS, sauvegarder en logique, puis l'épreuve du niveau |
 
-`pg-08-restaurer-pitr` est le seul `lab_type: challenge` du catalogue, avec un
-`exam_passing_score` de 80. `pg-09-repliquer` est le seul lab à **deux
+Les deux parcours sont **parallèles** : on choisit son moteur, on ne traverse
+pas l'un pour atteindre l'autre. Rien dans le contrat ne lie les deux sections,
+et `dsoxlab next` suit l'ordre de chacune.
+
+Deux labs seulement ÉVALUENT, et ce sont les deux `lab_type: challenge` du
+catalogue : `pg-08-restaurer-pitr` avec un `exam_passing_score` de 80, et
+`mysql-epreuve-n1` avec 70. `pg-09-repliquer` est le seul lab à **deux
 machines** : il déclare `roles.standby: db2.lab`, ce qui crée le groupe Ansible
 `lab_standby` et fait entrer `db2` dans l'isolation.
 
@@ -106,11 +112,14 @@ Et pour la remettre : `ansible-vault encrypt --vault-password-file .vault-pass
 
 ---
 
-## Les cinq pièges d'écriture, tous rencontrés pour de vrai
+## Les dix pièges d'écriture, tous rencontrés pour de vrai
 
-Ils ont coûté une soirée, et chacun a été mesuré plutôt que déduit : le
-quatrième a été vérifié dans un conteneur PostgreSQL jetable avant d'être
-écrit ici. Les relire avant d'écrire un lab coûte deux minutes.
+Ils ont coûté deux soirées, et chacun a été mesuré plutôt que déduit : les
+quatre premiers dans un conteneur PostgreSQL jetable, les trois derniers dans
+un conteneur MySQL. Les relire avant d'écrire un lab coûte trois minutes.
+
+Les cinq premiers viennent du parcours PostgreSQL, les trois suivants du
+parcours MySQL, et le huitième a coûté un premier jet complet de l'épreuve.
 
 ### 1. Un test vert avant tout travail n'est pas un test
 
@@ -188,6 +197,61 @@ par une session témoin.
 redémarrage ne peut pas être demandé en même temps qu'une continuité de
 service, et doit donc être **donné par le setup**.
 
+### 6. Une option sans trace vérifiable ne se note pas
+
+`mysqldump --single-transaction` est la bonne pratique, et **rien dans le
+fichier produit ne dit qu'elle a été employée** : mesuré, un dump pris avec et
+un dump pris sans portent tous les deux un `LOCK TABLES`, et sont
+indiscernables une fois écrits.
+
+Un test qui prétendrait le vérifier noterait une **ligne de commande** et non
+un état, ce que ce catalogue refuse. La parade n'est pas de se taire : l'énoncé
+de `mysql-05` dit à l'apprenant que l'option est attendue de lui en production
+et qu'elle n'est pas notée, et le README du lab dit pourquoi. Une option utile
+dont on ne peut pas prouver l'emploi reste une option utile.
+
+Le corollaire, plus dur à accepter : un apprenant qui l'oublie obtient 100. Le
+lab mesure la complétude de la sauvegarde, pas la façon de la prendre sous
+charge, et il faut l'écrire plutôt que de l'espérer.
+
+### 7. Une affirmation absolue se dément toute seule
+
+J'avais écrit dans six documents de `mysql-03` que « rien, sur un serveur en
+marche, ne distingue une valeur qui survivra d'une valeur qui disparaîtra ».
+C'était vrai de `performance_schema.variables_info`, la table que le lab
+emploie, et **faux en général** : `performance_schema.persisted_variables`
+distingue bien les deux.
+
+La relecture d'une autre session l'a attrapé, et la correction a touché neuf
+fichiers, dont les deux `lab.yaml` et une docstring de test que la relecture
+n'avait pas vue.
+
+**La parade :** borner l'affirmation à ce qu'on a mesuré. « `variables_info`
+annonce la même source dans les deux cas » est vrai, vérifiable et suffisant.
+« Rien ne distingue » ajoute une portée qu'aucune mesure ne couvre.
+
+Et la nuance qui sauve le lab vaut d'être connue : `persisted_variables`
+reflète la **mémoire** et non le fichier. En vidant `mysqld-auto.cnf` derrière
+le dos du serveur, sans redémarrer, la table continue d'annoncer la valeur.
+Elle prouve donc l'intention de persister, et seul le redémarrage prouve
+l'**aller-retour**.
+
+### 8. Une sonde destructrice détruit ce que les autres tests mesurent
+
+Le premier jet de `mysql-epreuve-n1` prouvait le moindre privilège en tentant
+un `DROP TABLE` avec le compte de service. Sur une copie trop permissive, ce
+`DROP` **aboutit** : la table disparaît, le test passe au rouge comme prévu, et
+les deux tests suivants tombent aussi, pour une raison que personne ne
+rattache à la bonne cause. Un candidat irait chercher une faute de sauvegarde
+là où il a seulement trop accordé de droits.
+
+**La parade :** une sonde de refus doit être **inoffensive en cas de succès**.
+Lire `mysql.user`, qui ne modifie rien. Créer une base, qu'un `finally`
+retire. Insérer une ligne marquée, qu'un `finally` retire aussi.
+
+La règle générale : avant d'écrire une sonde, se demander ce qu'elle fait **si
+elle réussit**, et pas seulement ce qu'elle mesure quand elle échoue.
+
 ---
 
 ## Conventions d'un lab de ce catalogue
@@ -227,17 +291,139 @@ Huit labs sur neuf déposent un rapport de trois valeurs dans le répertoire de
 Le test exige aussi que l'en-tête **survive** : il disparaît si l'apprenant
 recrée le fichier par une redirection `>` au lieu de l'éditer.
 
+### 9. Un contrôle qui ne peut pas regarder ne conclut jamais au vert
+
+Rencontré **trois fois dans la même heure**, le 2026-10-20, pendant une étape
+de la procédure de version. Chaque fois le même symptôme, et il ne ressemble
+pas à une panne :
+
+    0 vert(s), 0 rouge(s), 15 ignoré(s) sur 15 lab(s)
+    code de sortie : 0
+
+Les trois causes, dans l'ordre où elles sont apparues, chacune cachée par la
+précédente :
+
+1. `verify-solutions.py` sondait l'infrastructure en important `dsoxlab`, et
+   son `except ImportError: return False` transformait une **bibliothèque
+   absente** en **infrastructure absente**. Le message envoyait faire un
+   `dsoxlab provision` déjà fait ;
+2. une fois `dsoxlab` installé, le script allait plus loin et butait sur
+   `dsoxlab reset`, qui **demande une confirmation**. Sans terminal, l'invite
+   échoue, et les quinze labs repartaient en « ignorés ». L'option manquait :
+   `--yes` ;
+3. en voulant prouver la correction, j'ai retiré `dsoxlab` du PATH. `terraform`
+   est parti avec, `read_terraform_outputs` a rendu `None`, et ma sonde a
+   traduit en « infra absente » ce que dsoxlab venait d'écrire mot pour mot :
+   « Nothing can be concluded about what is running ».
+
+**La parade, et elle est structurelle.** Une sonde rend TROIS états et non
+deux, comme le `doctor` de dsoxlab dont `unknown` n'est ni `ok` ni `failed` :
+
+| État | Sens | Geste |
+| --- | --- | --- |
+| mesuré | on sait | lire le verdict |
+| délibérément non mesuré | pas de tests, pas de solution, infra qu'on sait absente | ignorer, c'est un choix |
+| non mesurable | la sonde n'a pas abouti | **dire**, et sortir en non nul |
+
+Et sous `--check`, un lab qui devait être mesuré et ne l'a pas été sort en
+**3**, distinct du **1** d'une solution cassée : le premier se remesure, le
+second se répare.
+
+**Le contrôle se prouve en le faisant échouer.** Le code 3 a été éprouvé en
+retirant `dsoxlab` du PATH, et c'est cet essai qui a trouvé la troisième
+cause. Un garde-fou qu'on n'a pas vu refuser ne garde rien.
+
+### 10. `pkill -f` et `pgrep -f` se désignent eux-mêmes
+
+`dsoxlab reset pg-03-configurer` sortait en 2, donc un apprenant ne pouvait pas
+réinitialiser ce lab. La tâche fautive :
+
+    cmd: pkill -f "temoin-pg-03" || true
+
+`pkill -f` compare le motif à la ligne de commande ENTIÈRE de chaque processus,
+et le `bash -c 'pkill -f "temoin-pg-03" || true'` qui joue la tâche porte le
+motif dans son propre argv. pkill tue donc son parent, le shell meurt avant
+d'évaluer `|| true`, et Ansible rapporte « non-zero return code ».
+
+**La parade est le crochet.** `[t]emoin-pg-03` est une expression régulière qui
+reconnaît le texte `temoin-pg-03`, donc le processus visé, et PAS l'argv du
+shell appelant, qui contient les crochets littéralement. Le motif cesse ainsi
+de se désigner lui-même.
+
+Deux leçons de méthode, et la seconde vaut plus que la première.
+
+**Pourquoi il ne s'était pas vu.** `valider-labs.py` enchaîne ses propres
+étapes, et l'échec du `clean` final n'y est pas fatal. C'est
+`verify-solutions`, qui réinitialise AVANT de mesurer, qui l'a mis au jour, et
+seulement une fois son propre code de sortie corrigé (piège 9). Un défaut peut
+donc attendre derrière un autre : le premier garde-fou réparé révèle ce que le
+second cachait.
+
+**Le piège prend aussi l'auteur.** Le même `pgrep -f` m'a attrapé trois fois le
+même jour dans mes propres scripts de mesure, dont une fois en tuant mon shell.
+Ce n'est pas une faute de contenu, c'est une faute d'outillage, et elle ne
+s'oublie qu'en se relisant.
+
+---
+
+## Écrire une épreuve de niveau
+
+Une épreuve n'est pas un lab plus long : elle **évalue**, donc trois choses
+changent.
+
+**Le barème est contractuel, et un garde-fou le tient.** dsoxlab note PAR
+TEST : dix tests valent dix points chacun. Si l'énoncé annonce dix tâches à dix
+points et que le fichier en compte onze, chaque tâche vaut en réalité 9,09 et
+le barème affiché ment. Le validateur de contenu de dsoxlab refuse justement
+cet écart, à deux conditions de forme qu'il faut connaître :
+
+- chaque tâche notée est un titre de niveau 3 finissant par `(N points)` ;
+- l'annonce du total s'écrit de façon que le PREMIER nombre de points qui suit
+  le mot « tâches » soit le total. « 10 tâches notées, 100 points en tout »
+  fonctionne ; « 10 tâches à 10 points chacune, 100 points en tout » est lu
+  comme un total de 10 et le contrôle échoue.
+
+Toute modification d'une épreuve touche donc l'énoncé **et** les tests
+ensemble.
+
+**Le setup DÉSASSEMBLE l'instance à chaque passage.** Celui de
+`mysql-epreuve-n1` recrée le compte tout-puissant, rétablit l'écoute sur
+`0.0.0.0`, efface `mysqld-auto.cnf` et **retire les fichiers de configuration
+que le candidat aurait ajoutés**. Sans ce dernier point, un
+`z-zz-candidat.cnf` d'un passage précédent l'emporterait sur celui du setup,
+les fichiers de `mysql.conf.d` étant lus dans l'ordre alphabétique : le
+deuxième passage noterait le travail du premier.
+
+**Les indices coûtent cher, et c'est un choix assumé.** 20 et 30 points sur
+l'épreuve MySQL : qui prend les deux tombe à 50 et ne peut plus atteindre les
+70 de réussite. Ils nomment les pièges du niveau sans donner une seule
+commande, et un contrôle du script qui les écrit le vérifie. Les supprimer
+serait pire : un candidat bloqué à 0 n'apprend rien, et une épreuve se
+repasse.
+
 ---
 
 ## Ce que le catalogue ne couvre pas encore
 
 Les **sept** guides PostgreSQL du site qui décrivent un geste sont tous
-jumelés à un lab, mesuré sur les `doc_url` des neuf `lab.yaml` :
+jumelés à un lab, mesuré sur les `doc_url` des quinze `lab.yaml` :
 `installation`, `prise-en-main-psql`, `configuration`, `securisation`,
 `sauvegarde-restauration` (trois labs à lui seul), `monitoring-maintenance` et
 `replication`. Les deux pages restantes n'ont pas de lab et n'en auront pas :
 `decouvrir-postgresql` est une introduction, `index` une page d'accueil, et ni
 l'une ni l'autre ne propose de geste à prouver.
+
+**Côté MySQL**, cinq guides sur neuf sont jumelés, mesuré de la même façon mais
+sur les URL entières : `installation`, `prise-en-main-mysql-cli`,
+`configuration`, `securisation` et `sauvegarde-restauration`. Deux restent sans
+lab et en mériteraient un, `monitoring-maintenance` et `replication`, qui
+ouvriraient les niveaux 2 et 3 du parcours MySQL. Les deux dernières,
+`decouvrir-mysql` et `index`, sont une introduction et une page d'accueil.
+
+Attention au comptage : les guides des deux moteurs portent les mêmes noms de
+fichier. Comparer les derniers segments d'URL fait croire que
+`monitoring-maintenance` est couvert, puisque `pg-06` cite celui de
+PostgreSQL. Le comptage se fait sur l'URL entière.
 
 Restent sans lab, faute de guide publié : la montée de version majeure, pgBackRest, le
 basculement manuel, la réplication logique, Patroni et le point d'entrée
@@ -246,5 +432,5 @@ stable.
 **La règle est : le lab d'abord, le guide ensuite.** Un guide écrit avant son
 lab décrit ce qu'on imagine ; un guide écrit après décrit ce qui marche.
 
-Aucun lab ne déclare de `course.yaml` : les neuf affichent donc leur cours d'un
-seul bloc.
+Aucun lab ne déclare de `course.yaml` : les quinze affichent donc leur cours
+d'un seul bloc.

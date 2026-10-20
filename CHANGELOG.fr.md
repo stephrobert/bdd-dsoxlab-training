@@ -9,6 +9,97 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.3.0] - 2026-10-20
+
+### Ajouté
+
+- **Le niveau 1 MySQL, complet : cinq labs et une épreuve notée**, chacun
+  prouvé dans les deux sens (0 avant le travail, 100 après). C'est un parcours
+  PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas
+  l'un pour atteindre l'autre.
+
+  | Lab | Ce qu'il prouve |
+  |---|---|
+  | `mysql-01-installer` | l'instance 8.4 LTS vient du dépôt Oracle, avec une clé dont les SOUS-CLÉS sont aussi contrôlées en expiration, et les deux portes sont fermées. Les paquets Oracle ne livrent aucun `bind-address`, la variable vaut `*` par défaut, et `bind-address` seul ne restreint pas le port 33060, qui a sa propre variable. |
+  | `mysql-02-client-admin` | une connexion qui aboutit vraiment sans mot de passe tapé et sans terminal. `mysql_config_editor` lit `/dev/tty` dès qu'un terminal de contrôle existe, et Ansible en fournit toujours un. |
+  | `mysql-03-configurer` | noté sur un REDÉMARRAGE : `performance_schema.variables_info` annonce la même source après un `SET GLOBAL` qui sera perdu et un `SET PERSIST` qui survivra. Le journal lent est noté sur une requête lente qui y atterrit vraiment. |
+  | `mysql-04-securiser` | un rôle accordé n'est PAS un rôle actif, et aucune table du catalogue ne le dit. Le clair refusé, le chiffré debout, et le TLS exigé sur le COMPTE plutôt que dans un fichier. |
+  | `mysql-05-sauvegarder` | `mysqldump --help` annonce `routines FALSE` : un dump pris sans `--routines` omet les procédures stockées tout en gardant les triggers, et la restauration réussit quand même avec un code 0. Noté sur le fichier ET sur la base restaurée. |
+  | `mysql-epreuve-n1` | l'épreuve du niveau : dix tâches, 100 points, 70 pour réussir. Premier lab ÉVALUÉ du catalogue (`lab_type: challenge` avec `exam_passing_score`), où `dsoxlab submit` rend un verdict. |
+
+- `tests/test_documentation_executable.py`, qui confronte les options citées
+  dans les Markdown à ce que le `--help` des scripts accepte vraiment. Une
+  commande documentée qui n'existe plus envoie un lecteur dans un mur, et rien
+  dans le dépôt ne le disait.
+
+### Modifié
+
+- `scripts/valider-labs.py` distingue désormais un conteneur qu'un lab a
+  LAISSÉ d'un conteneur qu'il ne pouvait pas avoir créé. Le pilote accusait
+  `pg-02` d'un conteneur lancé par une autre session, et une accusation qui
+  nomme le mauvais lab est pire que le silence.
+
+- `README.md` et `README.fr.md` n'annoncent plus neuf labs, et décrivent les
+  deux parcours parallèles ainsi que l'épreuve.
+
+### Corrigé
+
+- **Une affirmation de moi dans `mysql-03-configurer` était trop forte** :
+  « rien d'autre ne prouve la persistance ».
+  `performance_schema.persisted_variables` distingue bien un `SET GLOBAL` d'un
+  `SET PERSIST`. Mesuré sur 8.4.10, elle reflète la MÉMOIRE et non le fichier :
+  en vidant `mysqld-auto.cnf` derrière le dos du serveur, la table continue
+  d'annoncer la valeur. Elle prouve donc l'intention de persister, et seul le
+  redémarrage prouve l'aller-retour. Neuf documents corrigés, dont les deux
+  descriptions de `lab.yaml` et la docstring du test central.
+
+- `pg-02-psql-admin` : un `.pgpass` aux droits trop larges n'est PAS ignoré en
+  silence. libpq l'avertit, et seul le cas de l'hôte qui ne correspond pas est
+  muet, les deux finissant sur le même `fe_sendauth: no password supplied`.
+
+- `RELEASING.md` et `RELEASING.fr.md` ne citent plus une option `--deux-sens`
+  que le script n'a jamais acceptée : c'est `--check --negative`.
+
+- **`scripts/verify-solutions.py` concluait au vert sans avoir regardé, trois
+  fois dans la même heure**, chaque fois avec le même symptôme : `0 rouge,
+  15 ignorés, code de sortie 0`. Trouvé en jouant une étape de cette procédure
+  de publication même.
+
+  Les trois causes, chacune cachée par la précédente : un
+  `except ImportError: return False` transformait une BIBLIOTHÈQUE ABSENTE en
+  INFRASTRUCTURE ABSENTE, et le message envoyait faire un `dsoxlab provision`
+  déjà fait ; puis `dsoxlab reset` demandait une confirmation qu'aucun terminal
+  ne pouvait donner, l'option `--yes` manquant ; puis un state Terraform
+  illisible était annoncé comme « infra absente », là où dsoxlab venait
+  d'écrire « Nothing can be concluded about what is running ».
+
+  La sonde rend désormais TROIS états au lieu d'un booléen, comme le `doctor`
+  de dsoxlab avec son `unknown`, et sous `--check` un lab qui devait être
+  mesuré et ne l'a pas été sort en **3**, distinct du **1** d'une solution
+  cassée : le premier se remesure, le second se répare. Le garde-fou a été
+  prouvé en le faisant échouer, et c'est cet essai qui a trouvé la troisième
+  cause.
+
+- `RELEASING.md` et `RELEASING.fr.md` nomment l'interpréteur dont
+  `verify-solutions.py` a besoin, qui doit porter pytest ET dsoxlab, et
+  documentent ses codes de sortie. La procédure citait `python3`, qui sur la
+  machine de référence ne porte ni l'un ni l'autre.
+
+- **`dsoxlab reset pg-03-configurer` échouait, donc un apprenant ne pouvait pas
+  réinitialiser ce lab.** Son cleanup jouait
+  `pkill -f "temoin-pg-03" || true`, et `pkill -f` compare le motif à la ligne
+  de commande ENTIÈRE de chaque processus : le `bash -c` qui exécutait la tâche
+  portait le motif dans son propre argv, donc pkill tuait son parent et le
+  shell mourait avant d'évaluer `|| true`. Le motif est désormais entre
+  crochets, `[t]emoin-pg-03`, qui reconnaît le processus visé et pas le shell
+  appelant.
+
+  Il était resté caché parce que `valider-labs.py` ne traite pas l'échec du
+  `clean` final comme fatal. C'est `verify-solutions`, qui réinitialise AVANT
+  de mesurer, qui l'a mis au jour, et seulement une fois son propre code de
+  sortie corrigé : le premier garde-fou réparé a révélé ce que le second
+  cachait.
+
 ## [0.2.0] - 2026-10-20
 
 ### Ajouté
@@ -17,7 +108,8 @@ labs, ce qui casse la progression déjà enregistrée des apprenants.
   premiers labs : `pg-01-installer` (l'instance vient du dépôt PGDG, et sa clé
   est contrôlée) et `pg-02-psql-admin` (un script se connecte par le réseau
   sans mot de passe tapé, ce que `.pgpass` n'autorise qu'en 0600, psql
-  l'ignorant en silence autrement).
+  n'honorant pas autrement un fichier que le groupe ou les autres
+  peuvent lire, ce dont il avertit).
 
 - **Sept labs, tous éprouvés dans les deux sens** (0 avant le travail, 100
   après), ce qui porte le catalogue de deux labs à neuf et ouvre les niveaux 2

@@ -1,0 +1,35 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: mysql-04-securiser
+title: "Grant through roles, activate them, and refuse an unencrypted login"
+description: |
+  Build two privilege roles, give one to an application account, ACTIVATE it,
+  and force TLS on that account. Graded on behaviour: an unencrypted
+  connection must be refused, an encrypted one must work, and the account must
+  read what it is allowed to and nothing more. A role granted but not
+  activated grants nothing, and no catalog table says so.
+section: mysql-niveau-1
+level: mysql-niveau-1
+lab_type: lab
+difficulty: intermediate
+estimated_time: "40m"
+skills:
+  - mysql
+  - securite
+  - roles
+  - tls
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/securisation/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: true
+  persistence_after_reboot: false

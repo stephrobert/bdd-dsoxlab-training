@@ -83,9 +83,27 @@ ligne du dépôt sur laquelle se priver du regard des analyseurs.
    ```bash
    dsoxlab validate-structure --check-urls
    pre-commit run --all-files --hook-stage pre-push
-   python3 scripts/verify-solutions.py --check --negative
+   .venv/bin/python scripts/verify-solutions.py --check --negative
    python3 scripts/valider-labs.py      # écrit validation-labs.json
    ```
+
+   **L'interpréteur de `verify-solutions.py` doit porter DEUX choses** :
+   `pytest`, pour jouer les tests, et `dsoxlab`, pour la sonde
+   d'infrastructure. Mesuré le 2026-10-20 : lancé avec le `python3` de mise,
+   il sort en 2 sans rien mesurer ; lancé avec un venv qui a pytest mais pas
+   dsoxlab, il annonçait « infra non provisionnée » sur une infrastructure qui
+   venait de porter les quinze labs. Si l'un des deux manque, le script le dit
+   et nomme la commande qui l'installe.
+
+   Ses codes de sortie sous `--check` se lisent comme ceux de
+   `dsoxlab doctor --strict` :
+
+   | Code | Sens |
+   | --- | --- |
+   | `0` | tout ce qui devait être mesuré l'a été, et c'est vert |
+   | `1` | une solution de référence ne passe plus ses tests |
+   | `2` | le harnais lui-même ne permet pas de mesurer, et il dit lequel |
+   | `3` | des labs n'ont pas pu être mesurés, ce qui n'est pas un succès |
 
 2. **Réattester les labs qui ont changé depuis leur verdict.** Un lab dont les
    tests, les fichiers, un `conftest.py` commun ou les descripteurs ont été

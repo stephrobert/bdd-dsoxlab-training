@@ -1,0 +1,9 @@
+title: "Produire une sauvegarde logique complète, et le prouver en la restaurant"
+description: |
+  Sauvegarder la base `appli`, la restaurer dans une base neuve, et prouver que
+  la copie est utilisable : mêmes lignes, procédure stockée APPELABLE, trigger
+  qui déclenche. Noté sur le serveur restauré et sur le fichier de sauvegarde,
+  jamais sur une ligne de commande. Le piège est mesuré : `mysqldump` annonce
+  `routines FALSE`, donc une sauvegarde prise sans `--routines` omet
+  silencieusement les procédures stockées, et la restauration réussit quand
+  même avec le code 0.

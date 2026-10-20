@@ -1,0 +1,33 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: mysql-02-client-admin
+title: "Drive MySQL from the client, without a password on the command line"
+description: |
+  Store the credentials in a login path, create the application's objects,
+  turn the Performance Schema back on, and install MySQL Shell. Graded on a
+  connection that really works with no password typed and no terminal, on the
+  catalog, and on a startup variable that a `SET` cannot change.
+section: mysql-niveau-1
+level: mysql-niveau-1
+lab_type: lab
+difficulty: beginner
+estimated_time: "35m"
+skills:
+  - mysql
+  - administration
+  - observabilite
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/prise-en-main-mysql-cli/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: true
+  persistence_after_reboot: false

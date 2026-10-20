@@ -87,6 +87,10 @@ class Verdict:
     tests: str | None = None
     duree_s: float = 0.0
     traces: list[str] = field(default_factory=list)
+    # Les conteneurs apparus pendant la fenêtre du lab alors qu'il ne déclare
+    # AUCUN service, donc qu'il ne pouvait pas les créer. Signalés sans
+    # changer le verdict : l'information compte, l'accusation serait fausse.
+    traces_etrangeres: list[str] = field(default_factory=list)
     pourquoi: str = ""
 
 
@@ -131,6 +135,29 @@ def _conteneurs() -> set[str]:
         check=False,
     )
     return {ligne.strip() for ligne in proc.stdout.splitlines() if ligne.strip()}
+
+
+def _le_lab_peut_creer_un_conteneur(lab: Path) -> bool:
+    """Un lab ne crée un conteneur que par les services qu'il DÉCLARE.
+
+    `runtime.services` est le seul mécanisme du contrat qui lance un
+    conteneur. Un lab qui n'en déclare aucun ne peut rien laisser derrière
+    lui, et un conteneur apparu pendant sa fenêtre vient forcément d'ailleurs.
+
+    Mesuré le 2026-10-20 : pg-02 s'est vu attribuer un `pgfc-test`
+    (image postgres:18) créé par une autre session qui mesurait
+    `.pg_service.conf` au même moment. Le lab avait rendu 0 puis 100, son
+    contenu était donc attesté, et il a été classé ROUGE pour le travail
+    d'autrui.
+
+    En cas de doute, cette fonction répond False : on préfère ne pas accuser.
+    """
+    try:
+        donnees = lire_yaml(lab / "lab.yaml")
+    except YamlIllisible:
+        return False
+    runtime = donnees.get("runtime") or {}
+    return bool(runtime.get("services"))
 
 
 def labs_du_catalogue() -> list[tuple[str, Path]]:
@@ -294,7 +321,20 @@ def valider(identifiant: str, lab: Path) -> Verdict:
         laisses = {
             c for c in _conteneurs() - avant if not c.startswith("dsoxlab-")
         }
-        if laisses:
+        if laisses and not _le_lab_peut_creer_un_conteneur(lab):
+            # Le lab ne déclare AUCUN service, donc il ne pouvait pas créer de
+            # conteneur : ce qui est apparu vient d'ailleurs. On le signale,
+            # parce que cela peut encore faire tomber le lab suivant, mais on
+            # ne change PAS le verdict : l'accusation serait fausse.
+            v.traces_etrangeres = sorted(laisses)
+            print(
+                f"      note : {len(laisses)} conteneur(s) apparu(s) pendant la "
+                f"fenêtre de ce lab, qui ne déclare aucun service et ne peut donc "
+                f"pas les avoir créés : {v.traces_etrangeres}. Une autre session "
+                f"travaille sur cette machine.",
+                file=sys.stderr,
+            )
+        elif laisses:
             v.traces = sorted(laisses)
             if v.verdict == "VALIDE":
                 v.verdict = "ROUGE"

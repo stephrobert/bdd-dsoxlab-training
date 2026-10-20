@@ -9,12 +9,20 @@ aucun objet applicatif, rapport non rempli.
 
 LE PIÈGE QUE CE LAB FAIT RENCONTRER
 
-`.pgpass` est **ignoré en silence** par psql si ses permissions sont trop
-larges : pas d'erreur, pas d'avertissement visible dans un script, juste une
-demande de mot de passe qui bloque. Un apprenant qui écrit le fichier sans le
-passer en 0600 croit avoir fini. Le test contrôle donc les deux : le contenu
-ET le mode, puis la seule chose qui prouve que psql l'honore, une connexion
-réseau qui aboutit sans qu'aucun mot de passe soit fourni.
+Deux pannes de `.pgpass` rendent LA MÊME erreur finale, et une seule
+avertit. Mesuré sur PostgreSQL 18 le 2026-10-20 :
+
+- droits trop larges : libpq avertit, « password file … has group or world
+  access », puis psql redemande le mot de passe et échoue sur
+  `fe_sendauth: no password supplied` ;
+- droits justes mais hôte qui ne correspond pas au `-h` : AUCUN
+  avertissement, et exactement la même erreur.
+
+L'avertissement du premier cas part sur la sortie d'erreur, qu'un script jette
+souvent : les deux cas reviennent alors au même symptôme, une demande de mot de
+passe qui bloque. Le test contrôle donc le contenu ET le mode, puis la seule
+chose qui prouve que psql l'honore, une connexion réseau qui aboutit sans
+qu'aucun mot de passe soit fourni.
 
 CE QUE LES TESTS N'INTERROGENT JAMAIS
 

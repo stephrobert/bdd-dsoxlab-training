@@ -1,0 +1,135 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE QUE CE SETUP DONNE
+#
+# Une instance 8.4 fermée sur sa boucle locale, le compte d'administration, et
+# la base `appli` avec deux tables remplies.
+#
+# CE QU'IL NE DONNE PAS, ET QUI EST LE TRAVAIL
+#
+# Aucun rôle, aucun compte applicatif, aucune exigence de TLS. Et tout rôle ou
+# compte d'un passage précédent est RETIRÉ : sans cela, le travail de la fois
+# d'avant survivrait et quatre tests seraient verts avant tout travail.
+- name: Préparer le lab mysql-04-securiser
+  hosts: lab_target
+  become: true
+  vars:
+    mdp_root: "R00t!Lab2026"
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    base: appli
+    lecteur: app_lecture
+    conf_dir: /etc/mysql/mysql.conf.d
+  tasks:
+
+    - name: Installer de quoi vérifier une signature
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    # La clé 2025 et non la 2023 : cette dernière a EXPIRÉ le 2025-10-22.
+    - name: Récupérer la clé de signature d'Oracle, en cours de validité
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2025
+        dest: /etc/apt/keyrings/mysql.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt MySQL 8.4 LTS, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: mysql
+        types: deb
+        uris: https://repo.mysql.com/apt/debian
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: mysql-8.4-lts
+        signed_by: /etc/apt/keyrings/mysql.asc
+        state: present
+
+    - name: Pré-configurer le mot de passe root
+      ansible.builtin.shell:
+        cmd: 'printf "%s\n%s\n" "mysql-community-server mysql-community-server/root-pass password {{ mdp_root }}" "mysql-community-server mysql-community-server/re-root-pass password {{ mdp_root }}" | debconf-set-selections'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Installer MySQL 8.4 LTS
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Restreindre l'écoute des deux protocoles à la boucle locale
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-bind.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [mysqld]
+          bind-address        = 127.0.0.1
+          mysqlx-bind-address = 127.0.0.1
+
+    - name: Effacer ce qu'un SET PERSIST aurait laissé
+      ansible.builtin.file:
+        path: /var/lib/mysql/mysqld-auto.cnf
+        state: absent
+
+    - name: Démarrer le service, activé au démarrage
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+        enabled: true
+
+    - name: Attendre que le serveur réponde
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        timeout: 60
+
+    - name: Créer le compte d'administration
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_root }}" mysql -u root -e "create user if not exists ''{{ admin }}''@''localhost'' identified by ''{{ mdp_admin }}''; grant all privileges on *.* to ''{{ admin }}''@''localhost'' with grant option;"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── Retirer le travail d'un passage précédent ───────────────────────
+    #
+    # `drop role if exists` et `drop user if exists` : sans cela, les rôles et
+    # le compte applicatif de la fois d'avant survivraient au nettoyage, et
+    # quatre tests seraient verts avant tout travail.
+    - name: Retirer les rôles et le compte applicatif d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop role if exists role_reader, role_writer; drop user if exists ''{{ lecteur }}''@''127.0.0.1'', ''{{ lecteur }}''@''localhost'', ''{{ lecteur }}''@''%'';"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── La base et ses tables, remplies ────────────────────────────────
+    - name: Poser la base applicative et deux tables
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "create database if not exists {{ base }}; create table if not exists {{ base }}.clients (id int auto_increment primary key, nom varchar(100) not null) engine = InnoDB; create table if not exists {{ base }}.commandes (id int auto_increment primary key, client_id int, montant decimal(10,2)) engine = InnoDB; insert into {{ base }}.clients (nom) select * from (select ''Durand'' union all select ''Martin'' union all select ''Nguyen'') as v where not exists (select 1 from {{ base }}.clients); insert into {{ base }}.commandes (client_id, montant) select * from (select 1, 42.00 union all select 2, 13.50) as v where not exists (select 1 from {{ base }}.commandes);"'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-securite.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport de securisation de l'instance MySQL.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que le serveur
+          # repond VRAIMENT. Les lignes de commentaire ne sont pas lues par le
+          # test : seules les lignes « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          role_actif_a_la_connexion = A_COMPLETER
+          exigence_tls_du_compte = A_COMPLETER
+          nb_roles_sans_connexion = A_COMPLETER

@@ -1,0 +1,41 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+#
+# `lab_type: challenge` et non `lab` : c'est ce qui autorise
+# `exam_passing_score`, et ce qui dit à l'apprenant que cette épreuve ÉVALUE.
+id: mysql-epreuve-n1
+title: "Level 1 exam: take over an instance left wide open"
+description: |
+  An instance in service, inherited as is: listening on every interface, one
+  account that can do everything, no tuning, no backup. Bring it to a state you
+  would accept on call, and prove it. Ten graded tasks, 100 points, 70 to pass.
+  Nothing is explained a second time: the level's five labs taught it, this
+  exam measures it. Graded on the real state, after a restart.
+section: mysql-niveau-1
+level: mysql-niveau-1
+lab_type: challenge
+exam_passing_score: 70
+difficulty: advanced
+estimated_time: "1h15"
+skills:
+  - mysql
+  - configuration
+  - securite
+  - roles
+  - tls
+  - sauvegarde
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: true
+  persistence_after_reboot: true
