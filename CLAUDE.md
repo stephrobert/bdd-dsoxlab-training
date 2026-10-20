@@ -18,8 +18,8 @@ labs et ses solutions.
 
 ## L'état, le 2026-10-20
 
-Quinze labs, **131 tests fonctionnels**, **294 assertions**, **15 solutions sur
-15 chiffrées**. Deux moteurs, et le niveau 1 MySQL est complet.
+Dix-sept labs, **145 tests fonctionnels**, **329 assertions**, **17 solutions
+sur 17 chiffrées**. Deux moteurs, et les trois niveaux MySQL sont ouverts.
 
 | Parcours | Niveau | Labs | Sujet |
 | --- | --- | --- | --- |
@@ -27,6 +27,8 @@ Quinze labs, **131 tests fonctionnels**, **294 assertions**, **15 solutions sur
 | PostgreSQL | 2 | `pg-06` → `pg-08` | observer et maintenir, archivage WAL et sauvegarde physique, restauration à un instant donné |
 | PostgreSQL | 3 | `pg-09` | réplication en flux |
 | MySQL | 1 | `mysql-01` → `mysql-05` et `mysql-epreuve-n1` | installer, piloter le client et MySQL Shell, configurer avec persistance, accorder par rôles avec TLS, sauvegarder en logique, puis l'épreuve du niveau |
+| MySQL | 2 | `mysql-06-observer` | faire cesser une lecture complète de table, et récupérer l'espace qu'une purge n'a pas rendu |
+| MySQL | 3 | `mysql-07-repliquer` | répliquer avec GTID, interdire les écritures sur le réplica, et prouver qu'une ligne arrive |
 
 Les deux parcours sont **parallèles** : on choisit son moteur, on ne traverse
 pas l'un pour atteindre l'autre. Rien dans le contrat ne lie les deux sections,
@@ -34,9 +36,10 @@ et `dsoxlab next` suit l'ordre de chacune.
 
 Deux labs seulement ÉVALUENT, et ce sont les deux `lab_type: challenge` du
 catalogue : `pg-08-restaurer-pitr` avec un `exam_passing_score` de 80, et
-`mysql-epreuve-n1` avec 70. `pg-09-repliquer` est le seul lab à **deux
-machines** : il déclare `roles.standby: db2.lab`, ce qui crée le groupe Ansible
-`lab_standby` et fait entrer `db2` dans l'isolation.
+`mysql-epreuve-n1` avec 70. Deux labs emploient **deux
+machines** : `pg-09-repliquer`, qui déclare `roles.standby: db2.lab`, et
+`mysql-07-repliquer`, qui déclare `roles.replica: db2.lab`. Chacun crée son
+groupe Ansible `lab_<role>` et fait entrer `db2` dans l'isolation.
 
 L'infrastructure est de trois VM Debian 13 (`db1.lab`, `db2.lab`, `db3.lab`),
 réseau `lab-bdd`. `db3` n'est employée par aucun lab pour l'instant.
@@ -112,7 +115,7 @@ Et pour la remettre : `ansible-vault encrypt --vault-password-file .vault-pass
 
 ---
 
-## Les dix pièges d'écriture, tous rencontrés pour de vrai
+## Les douze pièges d'écriture, tous rencontrés pour de vrai
 
 Ils ont coûté deux soirées, et chacun a été mesuré plutôt que déduit : les
 quatre premiers dans un conteneur PostgreSQL jetable, les trois derniers dans
@@ -363,6 +366,46 @@ second cachait.
 même jour dans mes propres scripts de mesure, dont une fois en tuant mon shell.
 Ce n'est pas une faute de contenu, c'est une faute d'outillage, et elle ne
 s'oublie qu'en se relisant.
+
+### 11. Une solution doit être idempotente, sinon elle casse sur son propre résultat
+
+La solution de `mysql-07` montait le chemin GTID sans regarder où il en était.
+Rejouée sur l'état qu'elle venait de produire, elle tentait
+`ON -> OFF_PERMISSIVE`, soit **deux crans en arrière**, et recevait le même
+`ERROR 1788` que le piège qu'elle enseigne.
+
+Ce n'est pas un cas d'école : `scripts/verify-solutions.py` réinitialise avant
+de rejouer, mais une session de mise au point ne le fait pas, et c'est là que
+le défaut se montre, au pire moment, en ressemblant à un défaut du lab.
+
+**La parade :** une solution relit l'état avant de le changer. Un
+`register` suivi d'un `when` coûte deux lignes, et il rend la solution rejouable
+sur n'importe quel état intermédiaire.
+
+### 12. Une mesure prise ailleurs ne prouve pas que le lab marche
+
+C'est le piège le plus coûteux du lot, et le plus difficile à voir.
+
+J'ai mesuré la réplication MySQL dans deux conteneurs avant d'écrire
+`mysql-07`, et tout marchait : la ligne arrivait en 50 millisecondes. Le lab,
+lui, échouait sur `ERROR 1049 : Unknown database`. La différence tenait à un
+seul détail d'ORDRE : dans le conteneur, j'avais activé GTID **avant** de créer
+la base, donc sa création portait un GTID et se répliquait ; le setup du lab la
+crée **avant** d'activer GTID, donc ses transactions sont **anonymes**, et un
+réplica en position automatique ne demande que des GTID.
+
+La mesure était juste. Elle ne mesurait simplement pas le lab.
+
+**La parade, en deux temps.** D'abord, écrire la mesure dans l'ORDRE du setup
+plutôt que dans l'ordre qui arrange. Ensuite, et surtout, ne jamais considérer
+un lab prouvé par une mesure : seul `scripts/valider-labs.py` le prouve, parce
+que lui seul joue le vrai setup sur les vraies machines.
+
+Une variante du même défaut m'a fait perdre un diagnostic complet le même jour.
+J'ai lancé `pytest` à la main sur des machines que le pilote venait de
+NETTOYER, j'ai lu `mysql: command not found`, et j'ai conclu que le setup était
+cassé. Il fonctionnait. **Avant de diagnostiquer, vérifier dans quel état se
+trouve la machine qu'on interroge.**
 
 ---
 

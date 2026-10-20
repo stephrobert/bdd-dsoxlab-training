@@ -1,12 +1,23 @@
-# bdd-dsoxlab-training
+# Relational Database Training: administer PostgreSQL or MySQL, and prove it
 
 **Language:** [English](./README.md) · [Français](./README.fr.md)
 
-Nine hands-on labs to put a PostgreSQL instance into production and keep
-it there: install it, drive it, configure it, harden it, back it up,
-watch it, recover it after a mistake, and replicate it. Written for
-sysadmins and DevOps engineers who will be on call for a database they
-did not design.
+[![CI](https://github.com/stephrobert/bdd-dsoxlab-training/actions/workflows/ci.yml/badge.svg)](https://github.com/stephrobert/bdd-dsoxlab-training/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/stephrobert/bdd-dsoxlab-training?label=OpenSSF%20Scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/stephrobert/bdd-dsoxlab-training)
+[![Plumber compliance](https://score.getplumber.io/github.com/stephrobert/bdd-dsoxlab-training.svg)](https://score.getplumber.io/github.com/stephrobert/bdd-dsoxlab-training)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](./LICENSE)
+
+Seventeen hands-on labs to put a relational database into production and keep
+it there: install it, drive it, configure it, harden it, back it up, watch it,
+recover it after a mistake, and replicate it. **Two engines, two parallel
+tracks**: nine labs on PostgreSQL over three levels, eight on MySQL over three
+levels, one of which is a graded exam. You pick an engine, you do not go
+through one to reach the other.
+
+Written for sysadmins and DevOps engineers who will be on call for a database
+they did not design. Every lab is graded on the **state of the system**, never
+on the commands typed.
 
 ## What it is
 
@@ -53,7 +64,7 @@ labs install them inside the virtual machines, from the PGDG repository and
 from the Oracle repository, which is itself the subject of each track's
 first lab.
 
-**All fifteen labs are `vm` labs**, so `dsoxlab provision` is always needed.
+**All seventeen labs are `vm` labs**, so `dsoxlab provision` is always needed.
 The catalog declares three Debian 13 machines (`db1.lab`, `db2.lab`,
 `db3.lab`) on the `lab-bdd` network, each with 2 GB of RAM, 2 vCPU and
 20 GB of disk: about 6 GB of RAM and 60 GB of disk in all.
@@ -199,6 +210,29 @@ lab of what is missing from the machine.
 | Lab | What it proves |
 |---|---|
 | `pg-09-repliquer` | a row written on the primary is readable on the standby |
+
+### MySQL, level 1: put a safe instance into service
+
+| Lab | What it proves |
+|---|---|
+| `mysql-01-installer` | the 8.4 LTS instance comes from the Oracle repository, key and **subkeys** checked, and **both** doors are shut |
+| `mysql-02-client-admin` | a connection works with no password typed and **no terminal** |
+| `mysql-03-configurer` | the settings survive a **restart**, which nothing else proves |
+| `mysql-04-securiser` | a granted role is **not** an active role, and cleartext is refused |
+| `mysql-05-sauvegarder` | the dump carries the **stored procedure**, and the restore is usable |
+| `mysql-epreuve-n1` | the level's **exam**: ten tasks, 100 points, 70 to pass |
+
+### MySQL, level 2: operate what is in service
+
+| Lab | What it proves |
+|---|---|
+| `mysql-06-observer` | the plan stopped reading the table whole, and the space a purge did **not** give back |
+
+### MySQL, level 3: replicate and make available
+
+| Lab | What it proves |
+|---|---|
+| `mysql-07-repliquer` | a row written on the source arrives, both threads run, and a direct write is refused |
 
 ## Contributing
 

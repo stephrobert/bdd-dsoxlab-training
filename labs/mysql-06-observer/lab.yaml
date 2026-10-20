@@ -1,0 +1,36 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: mysql-06-observer
+title: "Make the plan stop reading the table whole, and reclaim what a purge did not free"
+description: |
+  A table of events has been purged of nine rows out of ten, and it still
+  occupies what it occupied before. A query that filters it reads it whole,
+  although an index exists. Graded on the EXECUTION PLAN and on the size the
+  table really occupies, never on a command: measured on MySQL 8.4, adding an
+  index changes the plan without reclaiming a single byte, and a `DELETE`
+  reclaims nothing at all.
+section: mysql-niveau-2
+level: mysql-niveau-2
+lab_type: lab
+difficulty: intermediate
+estimated_time: "40m"
+skills:
+  - mysql
+  - exploitation
+  - performance
+  - maintenance
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/monitoring-maintenance/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false

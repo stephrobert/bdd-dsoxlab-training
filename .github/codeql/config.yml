@@ -1,0 +1,44 @@
+# Configuration CodeQL du catalogue Bases de données.
+#
+# POURQUOI CE FICHIER EXISTE
+#
+# Le `ci.yml` de ce dépôt le RÉFÉRENCE : sans lui, les deux jobs CodeQL
+# échouent sur « The configuration file .github/codeql/config.yml does not
+# exist », et c'est exactement ce qui est arrivé le 2026-10-20 en alignant la
+# chaîne sur celle des catalogues frères. Le fichier avait été oublié parce
+# qu'il vit sous `.github/codeql/` et non `.github/codeql-config.yml`.
+#
+# CE QU'IL EXCLUT, ET POURQUOI, MESURÉ SUR CE DÉPÔT
+#
+# Les solutions de référence, et elles seules. Mesuré : les **17 sur 17** sont
+# chiffrées par ansible-vault, donc CodeQL n'en lirait rien d'exploitable, et
+# les exclure évite qu'il rapporte un jour quelque chose sur du texte chiffré.
+#
+# À la différence de ses frères, ce catalogue n'exclut AUCUNE fixture, pour une
+# raison simple : il n'en a pas. Mesuré, `find labs -type d -name fixtures` rend
+# zéro, les dix-sept labs étant tous de runtime `vm`, où l'état de départ est
+# posé par un playbook et non par des fichiers copiés. Recopier l'exclusion
+# `labs/**/fixtures/**` d'un frère aurait donc été une ligne qui ne protège
+# rien et qui laisse croire que ce catalogue a des gabarits.
+#
+# Le seul fichier en clair de `solution/` est `verified-with.json`, un relevé
+# des versions d'outils et des statuts de vérification. Il ne porte aucun
+# contenu de solution, et il reste hors version dans ce dépôt.
+#
+# CE QUI RESTE ANALYSÉ, ET C'EST L'ESSENTIEL
+#
+#   .github/workflows/        les workflows du catalogue lui-même
+#   scripts/                  l'outillage de validation des labs
+#   tests/                    les garde-fous du dépôt
+#   labs/**/challenge/tests/  les tests pytest joués sur la machine de
+#                             l'apprenant, et il y en a dans les dix-sept labs
+#
+# Un workflow qui joindrait une destination non déclarée, ou un test qui
+# exfiltrerait quelque chose du poste de l'apprenant, reste donc vu. C'est le
+# périmètre que `SECURITY.md` déclare, et il n'a pas changé.
+name: "Catalogue Bases de données, hors solutions chiffrées"
+
+paths-ignore:
+  # Les solutions de référence sont chiffrées (ansible-vault) : CodeQL n'en
+  # lirait rien d'exploitable. 17 sur 17 au 2026-10-20.
+  - "solution/**"

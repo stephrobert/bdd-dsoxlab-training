@@ -1,12 +1,23 @@
-# bdd-dsoxlab-training
+# Formation Bases de données relationnelles : administrer PostgreSQL ou MySQL, et le prouver
 
 **Langue :** [English](./README.md) · [Français](./README.fr.md)
 
-Neuf labs pour mettre une instance PostgreSQL en production et la tenir :
-l'installer, la piloter, la configurer, la durcir, la sauvegarder,
-l'observer, la récupérer après une erreur, et la répliquer. Écrit pour les
-administrateurs et les ingénieurs DevOps qui seront d'astreinte sur une
-base qu'ils n'ont pas conçue.
+[![CI](https://github.com/stephrobert/bdd-dsoxlab-training/actions/workflows/ci.yml/badge.svg)](https://github.com/stephrobert/bdd-dsoxlab-training/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/stephrobert/bdd-dsoxlab-training?label=OpenSSF%20Scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/stephrobert/bdd-dsoxlab-training)
+[![Plumber compliance](https://score.getplumber.io/github.com/stephrobert/bdd-dsoxlab-training.svg)](https://score.getplumber.io/github.com/stephrobert/bdd-dsoxlab-training)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+[![Licence : CC BY 4.0](https://img.shields.io/badge/Licence-CC%20BY%204.0-lightgrey.svg)](./LICENSE)
+
+Dix-sept labs pour mettre une base relationnelle en production et la tenir :
+l'installer, la piloter, la configurer, la durcir, la sauvegarder, l'observer,
+la récupérer après une erreur, et la répliquer. **Deux moteurs, deux parcours
+parallèles** : neuf labs sur PostgreSQL en trois niveaux, huit sur MySQL en
+trois niveaux, dont une épreuve notée. On choisit son moteur, on ne traverse
+pas l'un pour atteindre l'autre.
+
+Écrit pour les administrateurs et les ingénieurs DevOps qui seront d'astreinte
+sur une base qu'ils n'ont pas conçue. Chaque lab est noté sur l'**état du
+système**, jamais sur les commandes tapées.
 
 ## Ce que c'est
 
@@ -54,7 +65,7 @@ les installent dans les machines virtuelles, depuis le dépôt PGDG et depuis
 le dépôt Oracle, ce qui est justement le sujet du premier lab de chaque
 parcours.
 
-**Les quinze labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
+**Les dix-sept labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
 nécessaire. Le catalogue déclare trois machines Debian 13 (`db1.lab`,
 `db2.lab`, `db3.lab`) sur le réseau `lab-bdd`, chacune avec 2 Go de RAM,
 2 vCPU et 20 Go de disque : environ 6 Go de RAM et 60 Go de disque en tout.
@@ -202,6 +213,29 @@ Un 0 accuserait le lab de ce qui manque au poste.
 | Lab | Ce qu'il prouve |
 |---|---|
 | `pg-09-repliquer` | une ligne écrite sur le primaire est lisible sur le secondaire |
+
+### MySQL, niveau 1 : mettre en service une instance sûre
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `mysql-01-installer` | l'instance 8.4 LTS vient du dépôt Oracle, clé et **sous-clés** contrôlées, et les **deux** portes sont fermées |
+| `mysql-02-client-admin` | une connexion aboutit sans mot de passe tapé ni **terminal** |
+| `mysql-03-configurer` | les réglages survivent à un **redémarrage**, que rien d'autre ne prouve |
+| `mysql-04-securiser` | un rôle accordé n'est **pas** un rôle actif, et le clair est refusé |
+| `mysql-05-sauvegarder` | le dump porte la **procédure stockée**, et la restauration est utilisable |
+| `mysql-epreuve-n1` | l'**épreuve** du niveau : dix tâches, 100 points, 70 pour réussir |
+
+### MySQL, niveau 2 : exploiter ce qui est en service
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `mysql-06-observer` | le plan a cessé de lire la table entière, et l'espace qu'une purge n'a **pas** rendu |
+
+### MySQL, niveau 3 : répliquer et rendre disponible
+
+| Lab | Ce qu'il prouve |
+|---|---|
+| `mysql-07-repliquer` | une ligne écrite sur la source arrive, les deux fils tournent, et l'écriture directe est refusée |
 
 ## Contribuer
 
