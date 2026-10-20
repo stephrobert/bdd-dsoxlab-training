@@ -9,6 +9,33 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.4.0] - 2026-10-20
+
+### Ajouté
+
+- **Les deux labs MySQL qui ouvrent les niveaux 2 et 3**, chacun prouvé dans
+  les deux sens (0 avant le travail, 100 après). Les quatre modules
+  d'exploitation et de réplication du parcours ont enfin un dispositif de
+  validation, ce qui était leur seul vrai défaut.
+
+  | Lab | Ce qu'il prouve |
+  |---|---|
+  | `mysql-06-observer` | le plan a cessé de lire la table entière, ce que l'existence d'un index ne prouve pas, et l'espace qu'une purge n'a pas rendu. Mesuré : après la suppression de neuf lignes sur dix la table occupe toujours 45 Mo, `CREATE INDEX` change le plan sans récupérer un seul octet, et seule une reconstruction la ramène à 6 Mo. |
+  | `mysql-07-repliquer` | une ligne écrite sur la source arrive sur le réplica, les deux fils de réplication tournent, et une écriture directe est refusée. Mesuré : `gtid_mode` refuse de passer de OFF à ON d'un coup (erreur 1788), et le greffon d'authentification par défaut bloque le canal sur une erreur 2061. |
+
+  `mysql-07-repliquer` est le deuxième lab à deux machines du catalogue, après
+  `pg-09-repliquer`, et le premier à déclarer `roles.replica`.
+
+- Deux sections dans `meta.yml` et `meta.fr.yml`, `mysql-niveau-2` et
+  `mysql-niveau-3`, qui ouvrent les niveaux 2 et 3 du parcours MySQL.
+
+### Modifié
+
+- `CLAUDE.md` consigne deux pièges d'écriture de plus, tous deux de ma main :
+  une solution non idempotente casse sur l'état qu'elle vient de produire, et
+  une mesure prise dans des conditions qui ne sont pas celles du lab ne prouve
+  pas que le lab marche. Le second a coûté un diagnostic complet.
+
 ## [0.3.0] - 2026-10-20
 
 ### Ajouté

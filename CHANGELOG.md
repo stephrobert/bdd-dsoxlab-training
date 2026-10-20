@@ -9,6 +9,33 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
+## [0.4.0] - 2026-10-20
+
+### Added
+
+- **The two MySQL labs that open levels 2 and 3**, each proven in both
+  directions (0 before the work, 100 after). The four operation and
+  replication modules of the course finally have a validation device, which
+  was their only real defect.
+
+  | Lab | What it proves |
+  |---|---|
+  | `mysql-06-observer` | the plan stopped reading the table whole, which an index's existence does not prove, and the space a purge did not give back. Measured: after deleting nine rows out of ten the table still occupies 45 MB, `CREATE INDEX` changes the plan without reclaiming a single byte, and only a rebuild brings it down to 6 MB. |
+  | `mysql-07-repliquer` | a row written on the source arrives on the replica, both replication threads are running, and a direct write is refused. Measured: `gtid_mode` refuses to go from OFF to ON in one step (error 1788), and the default authentication plugin blocks the channel with error 2061. |
+
+  `mysql-07-repliquer` is the catalogue's second two-machine lab, after
+  `pg-09-repliquer`, and the first to declare `roles.replica`.
+
+- Two sections in `meta.yml` and `meta.fr.yml`, `mysql-niveau-2` and
+  `mysql-niveau-3`, which open the MySQL track's levels 2 and 3.
+
+### Changed
+
+- `CLAUDE.md` records two authoring traps more, both of them mine: a solution
+  that is not idempotent breaks on the state it has just produced, and a
+  measurement taken under conditions that are not the lab's does not prove the
+  lab works. The second one cost a complete diagnostic.
+
 ## [0.3.0] - 2026-10-20
 
 ### Added

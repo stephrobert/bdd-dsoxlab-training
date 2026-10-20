@@ -53,7 +53,7 @@ labs install them inside the virtual machines, from the PGDG repository and
 from the Oracle repository, which is itself the subject of each track's
 first lab.
 
-**All fifteen labs are `vm` labs**, so `dsoxlab provision` is always needed.
+**All seventeen labs are `vm` labs**, so `dsoxlab provision` is always needed.
 The catalog declares three Debian 13 machines (`db1.lab`, `db2.lab`,
 `db3.lab`) on the `lab-bdd` network, each with 2 GB of RAM, 2 vCPU and
 20 GB of disk: about 6 GB of RAM and 60 GB of disk in all.
