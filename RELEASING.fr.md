@@ -83,7 +83,7 @@ ligne du dépôt sur laquelle se priver du regard des analyseurs.
    ```bash
    dsoxlab validate-structure --check-urls
    pre-commit run --all-files --hook-stage pre-push
-   python3 scripts/verify-solutions.py --deux-sens --check
+   python3 scripts/verify-solutions.py --check --negative
    python3 scripts/valider-labs.py      # écrit validation-labs.json
    ```
 
@@ -94,9 +94,21 @@ ligne du dépôt sur laquelle se priver du regard des analyseurs.
    côté de ce dépôt), lancer :
 
    ```bash
-   python3 scripts/reattester-labs.py --depot bdd-dsoxlab-training           # plan et garde-fous
-   python3 scripts/reattester-labs.py --depot bdd-dsoxlab-training --apply   # rejoue et commite
+   python3 ../test-astro-5/scripts/reattester-labs.py --depot bdd-dsoxlab-training           # plan et garde-fous
+   python3 ../test-astro-5/scripts/reattester-labs.py --depot bdd-dsoxlab-training --apply   # rejoue et commite
    ```
+
+   Le chemin est donné relativement à ce dépôt à dessein : le script vit dans
+   le dépôt du site et non ici, et une commande copiée depuis cette racine
+   répondrait « No such file ».
+
+   **Mesuré le 2026-10-20 : le script ne connaît pas ce catalogue.** Sa liste
+   de dépôts est codée en dur et s'arrête à `mlops-dsoxlab-training`, donc il
+   répond « dépôt inconnu » et ne réatteste rien. Tant qu'il lit une liste
+   écrite plutôt que le disque, le contrôle se remplace par une mesure : pour
+   chaque lab dont le verdict précède un changement, établir que le changement
+   est inerte, ou rejouer le lab par
+   `python3 scripts/valider-labs.py --lab <id>`.
 
    Le script rejoue chaque lab « à réattester » par `scripts/valider-labs.py`,
    un par un (tests et lab modifiés d'abord, puis `conftest.py` commun, puis
