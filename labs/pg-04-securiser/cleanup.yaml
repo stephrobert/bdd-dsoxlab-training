@@ -1,0 +1,49 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL, comme les labs précédents du catalogue.
+#
+# Purger et non défaire : le setup installe l'instance. Un nettoyage qui se
+# contenterait de remettre la ligne `host` et de retirer les rôles laisserait
+# la grappe, et le prochain `run` repartirait d'un état que l'apprenant n'a pas
+# construit.
+- name: Défaire le lab pg-04-securiser
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le client et le rapport de student
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /home/student/.pgpass
+        - /home/student/rapport-securite.txt
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc

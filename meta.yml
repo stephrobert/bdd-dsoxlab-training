@@ -78,12 +78,19 @@ sections:
     description: "Install PostgreSQL from the PGDG repository, administer it with psql, configure it, control access and back up a database. Other labs of the level are added as they are written and proven."
     labs:
       - pg-01-installer
+      - pg-02-psql-admin
+      - pg-03-configurer
+      - pg-04-securiser
+      - pg-05-sauvegarder
   - id: niveau-2
     title: "Level 2: protect and run"
     description: "Physical backups and point-in-time recovery, pgBackRest, monitoring, maintenance, major upgrades and incidents. Labs are added as they are written and proven."
     labs:
-      - pg-02-psql-admin
+      - pg-06-observer
+      - pg-07-archiver
+      - pg-08-restaurer-pitr
   - id: niveau-3
     title: "Level 3: replicate and make available"
     description: "Streaming replication, a stable entry point, high availability with Patroni and logical replication. Labs are added as they are written and proven."
-    labs: []
+    labs:
+      - pg-09-repliquer

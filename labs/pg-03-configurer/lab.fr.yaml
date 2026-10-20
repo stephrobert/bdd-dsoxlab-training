@@ -1,0 +1,10 @@
+# Surcharge française : le titre et la description, et rien d'autre. Tout autre
+# champ écrit ici est ignoré par le moteur.
+title: "Configurer la mémoire, les connexions et les journaux, et savoir ce qui se recharge"
+description: |
+  Poser les paramètres dont une instance exploitable a besoin, puis les
+  appliquer sans couper une seule session. Noté sur ce que le serveur répond
+  vraiment : les paramètres rechargeables doivent être EFFECTIFS et non
+  seulement écrits, celui de contexte postmaster doit être écrit et encore en
+  attente, et le serveur ne doit pas avoir été redémarré. Un rechargement ne
+  signale jamais un paramètre resté sans effet : seul `pending_restart` le dit.

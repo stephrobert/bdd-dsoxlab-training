@@ -1,0 +1,51 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# PostgreSQL, comme le fait pg-01.
+#
+# Le setup installe l'instance : un nettoyage qui se contenterait de défaire
+# les réglages laisserait la grappe et ses journaux, et plusieurs tests
+# passeraient avant tout travail au prochain run.
+- name: Défaire le lab pg-03-configurer
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Fermer la session témoin si elle vit encore
+      ansible.builtin.shell:
+        cmd: pkill -f "temoin-pg-03" || true
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-config.txt
+        state: absent
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc

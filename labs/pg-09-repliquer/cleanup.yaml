@@ -1,0 +1,79 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset`. DEUX PLAYS, comme le setup :
+# le lab a touché deux machines, le nettoyage doit les rendre toutes les deux.
+#
+# Nettoyer db2 est le point qui compte : une grappe laissée en secondaire suit
+# un primaire qui n'existera plus, et le prochain passage partirait d'un état
+# où `pg_is_in_recovery()` répond déjà `t`.
+- name: Défaire le primaire du lab pg-09-repliquer
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-replication.txt
+        state: absent
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc
+
+- name: Défaire le secondaire du lab pg-09-repliquer
+  hosts: lab_standby
+  become: true
+  tasks:
+
+    - name: Arrêter et désactiver PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger les paquets PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - "postgresql-18"
+          - "postgresql-client-18"
+          - "postgresql-common"
+        state: absent
+        purge: true
+        autoremove: true
+      failed_when: false
+
+    - name: Effacer les données, la configuration et le dépôt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+        - /etc/postgresql-common
+        - /etc/apt/sources.list.d/pgdg.sources
+        - /etc/apt/keyrings/pgdg.asc

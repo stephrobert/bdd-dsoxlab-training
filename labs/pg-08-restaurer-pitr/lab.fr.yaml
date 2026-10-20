@@ -1,0 +1,7 @@
+title: "Récupérer une table supprimée par une restauration à un instant donné"
+description: |
+  Un DROP TABLE a effacé les données de production. Restaure la grappe à
+  l'instant qui précède, depuis la sauvegarde physique et les WAL archivés.
+  Noté sur la TIMELINE autant que sur les données : une restauration menée à
+  son terme promeut la grappe et incrémente sa timeline, donc recréer la table
+  à la main la laisse à 1 et ne passe pas.

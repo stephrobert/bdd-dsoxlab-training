@@ -1,0 +1,8 @@
+title: "Refuser les connexions en clair et appliquer le moindre privilège"
+description: |
+  Poser un certificat dédié, faire REFUSER par le serveur une connexion réseau
+  non chiffrée, et ramener les droits de l'application à ce dont elle a besoin.
+  Noté sur le comportement et non sur des fichiers : une connexion en clair
+  doit échouer et une connexion chiffrée aboutir, et les privilèges sont lus
+  dans le catalogue. Sur Debian, `ssl = on` est déjà posé, donc l'activer ne
+  prouve rien : ce qui compte est que `host` devienne `hostssl`.

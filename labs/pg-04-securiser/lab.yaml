@@ -1,0 +1,37 @@
+# Canonique en anglais, comme le contrat l'exige. `lab.fr.yaml` surcharge le
+# titre et la description, et rien d'autre.
+id: pg-04-securiser
+title: "Refuse cleartext connections and apply least privilege"
+description: |
+  Put a dedicated certificate in place, make the server REFUSE an unencrypted
+  network connection, and cut the application's rights down to what it needs.
+  Graded on behaviour, not on files: a cleartext connection must fail and an
+  encrypted one must succeed, and the privileges are read from the catalog.
+  On Debian `ssl = on` is already set, so turning it on proves nothing: what
+  counts is that `host` becomes `hostssl`.
+section: niveau-1
+level: niveau-1
+lab_type: lab
+difficulty: intermediate
+estimated_time: "40m"
+skills:
+  - postgresql
+  - securite
+  - tls
+  - moindre-privilege
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/securisation/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: true
+  persistence_after_reboot: false

@@ -1,0 +1,35 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+id: pg-06-observer
+title: "Make the server observable, read a plan, and reclaim dead space"
+description: |
+  Load `pg_stat_statements`, then fix a query the planner reads
+  sequentially, and reclaim the space deletions left dead. Graded on the
+  PLANNER's answer and on the table's state, never on the presence of an
+  index: an index the planner ignores fixes nothing, and that is the most
+  common case.
+section: niveau-2
+level: niveau-2
+lab_type: lab
+difficulty: intermediate
+estimated_time: "40m"
+skills:
+  - postgresql
+  - monitoring
+  - maintenance
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false
