@@ -1,0 +1,187 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE QUE CE SETUP DONNE : une table dégradée, exactement comme une purge la
+# laisse.
+#
+# 200 000 lignes insérées, un index LEURRE posé sur `niveau`, puis neuf lignes
+# sur dix supprimées. Mesuré sur MySQL 8.4 : il reste 20 000 lignes et la table
+# occupe toujours 45 Mo, parce qu'un `DELETE` ne rend rien au disque.
+#
+# CE QU'IL NE DONNE PAS, ET QUI EST LE TRAVAIL
+#
+# Aucun index sur `service`, donc la requête du tableau de bord lit la table
+# entière (`type: ALL`, 17 477 lignes examinées). Aucune reconstruction, donc
+# l'espace reste pris. Et les compteurs du Performance Schema sont REMIS À ZÉRO
+# en fin de setup : sans cela, les propres ordres du setup seraient fichés sous
+# `appli` et le troisième test serait vert avant tout travail.
+#
+# POURQUOI UN INDEX LEURRE
+#
+# Pour que « un index existe » soit DÉJÀ VRAI au départ. Sans lui, un apprenant
+# pourrait croire que le test porte sur l'existence d'un index ; avec lui, le
+# seul moyen de passer est que le PLAN change.
+#
+# UNE CONTRAINTE D'ÉCRITURE
+#
+# Chaque commande tient sur UNE ligne. En YAML, un repli `>` conserve le saut
+# de ligne dès que l'une des deux lignes est plus indentée : anodin dans une
+# chaîne SQL, fatal entre deux mots d'un shell.
+- name: Préparer le lab mysql-06-observer
+  hosts: lab_target
+  become: true
+  vars:
+    mdp_root: "R00t!Lab2026"
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    base: appli
+    table: evenements
+    conf_dir: /etc/mysql/mysql.conf.d
+  tasks:
+
+    - name: Installer de quoi vérifier une signature
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    # La clé 2025 et non la 2023 : cette dernière a EXPIRÉ le 2025-10-22.
+    - name: Récupérer la clé de signature d'Oracle, en cours de validité
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2025
+        dest: /etc/apt/keyrings/mysql.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt MySQL 8.4 LTS, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: mysql
+        types: deb
+        uris: https://repo.mysql.com/apt/debian
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: mysql-8.4-lts
+        signed_by: /etc/apt/keyrings/mysql.asc
+        state: present
+
+    - name: Pré-configurer le mot de passe root
+      ansible.builtin.shell:
+        cmd: 'printf "%s\n%s\n" "mysql-community-server mysql-community-server/root-pass password {{ mdp_root }}" "mysql-community-server mysql-community-server/re-root-pass password {{ mdp_root }}" | debconf-set-selections'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Installer MySQL 8.4 LTS
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Restreindre l'écoute des deux protocoles à la boucle locale
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-bind.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [mysqld]
+          bind-address        = 127.0.0.1
+          mysqlx-bind-address = 127.0.0.1
+
+    - name: Effacer ce qu'un SET PERSIST aurait laissé
+      ansible.builtin.file:
+        path: /var/lib/mysql/mysqld-auto.cnf
+        state: absent
+
+    - name: Démarrer le service, activé au démarrage
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+        enabled: true
+
+    - name: Attendre que le serveur réponde
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        timeout: 60
+
+    - name: Créer le compte d'administration
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_root }}" mysql -u root -e "create user if not exists ''{{ admin }}''@''localhost'' identified by ''{{ mdp_admin }}''; grant all privileges on *.* to ''{{ admin }}''@''localhost'' with grant option;"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── Repartir d'une table neuve à chaque passage ────────────────────
+    #
+    # `drop table` et non un nettoyage : la dégradation doit être REFAITE à
+    # l'identique, sinon un deuxième passage trouverait la table déjà
+    # reconstruite par le travail du premier, et deux tests seraient verts
+    # avant tout travail.
+    - name: Retirer la table d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "create database if not exists {{ base }}; drop table if exists {{ base }}.{{ table }};"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Créer la table d'événements
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -D {{ base }} -e "create table {{ table }} (id bigint auto_increment primary key, service varchar(40) not null, niveau varchar(10) not null, message varchar(200), vu_le datetime default current_timestamp) engine = InnoDB;"'
+        executable: /bin/bash
+      changed_when: true
+
+    # 200 000 lignes par produit cartésien du catalogue, sans boucle shell :
+    # mesuré à moins de deux secondes, là où 200 000 INSERT en prendraient des
+    # minutes.
+    - name: Remplir la table de 200 000 lignes de journal
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -D {{ base }} -e "insert into {{ table }} (service, niveau, message) select concat(''svc-'', floor(rand()*50)), elt(floor(1+rand()*3), ''INFO'', ''WARN'', ''ERROR''), repeat(''x'', 150) from information_schema.columns a, information_schema.columns b limit 200000;"'
+        executable: /bin/bash
+      changed_when: true
+
+    # L'index LEURRE : il existe, et il ne sert pas la requête du tableau de
+    # bord. C'est lui qui fait que « un index existe » est déjà vrai.
+    - name: Poser l'index leurre, sur une autre colonne
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -D {{ base }} -e "create index idx_niveau on {{ table }} (niveau);"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Purger neuf lignes sur dix, comme la purge mensuelle
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -D {{ base }} -e "delete from {{ table }} where id % 10 <> 0; analyze table {{ table }};"'
+        executable: /bin/bash
+      changed_when: true
+
+    # ── Remettre les compteurs de diagnostic à zéro ────────────────────
+    #
+    # Sans ce TRUNCATE, les INSERT et DELETE ci-dessus resteraient fichés sous
+    # la base `appli` dans le digest, et le test « la requête est retrouvable
+    # sous sa base » serait VERT avant que l'apprenant ait rien fait. Mesuré :
+    # la sonde rend 0 juste après ce TRUNCATE.
+    - name: Remettre à zéro les statistiques de requêtes
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "truncate performance_schema.events_statements_summary_by_digest;"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-observation.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport d'observation de la table appli.evenements.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que le SERVEUR
+          # repond VRAIMENT, une fois ton travail fait. Les lignes de
+          # commentaire ne sont pas lues par le test : seules les lignes
+          # « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          type_d_acces_du_plan = A_COMPLETER
+          megaoctets_de_la_table = A_COMPLETER
+          lignes_restantes = A_COMPLETER

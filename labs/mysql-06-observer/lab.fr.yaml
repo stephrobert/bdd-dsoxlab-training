@@ -1,0 +1,8 @@
+title: "Faire que le plan cesse de lire la table entière, et récupérer ce qu'une purge n'a pas rendu"
+description: |
+  Une table d'événements a été purgée de neuf lignes sur dix, et elle occupe
+  toujours ce qu'elle occupait avant. Une requête qui la filtre la lit
+  entièrement, alors qu'un index existe. Noté sur le PLAN D'EXÉCUTION et sur la
+  taille que la table occupe vraiment, jamais sur une commande : mesuré sur
+  MySQL 8.4, ajouter un index change le plan sans récupérer un seul octet, et
+  un `DELETE` ne récupère rien du tout.
