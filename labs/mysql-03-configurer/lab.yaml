@@ -4,7 +4,7 @@ title: "Configure memory, connections and the slow log, so it survives a restart
 description: |
   Raise the InnoDB buffer pool and the connection ceiling, turn the slow query
   log on, and make all of it survive a restart. Graded on a RESTART, because
-  nothing else proves persistence: `SET PERSIST` and `SET GLOBAL` report the
+  nothing else proves the round trip: `SET PERSIST` and `SET GLOBAL` report the
   same source on a running server, measured. And the slow log is graded on a
   slow query actually landing in it.
 section: mysql-niveau-1

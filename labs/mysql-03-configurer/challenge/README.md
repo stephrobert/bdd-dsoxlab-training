@@ -22,10 +22,13 @@ appear in the file. The test will run one.
 This is the heart of the lab. The test **will stop and start** the server, then
 reread the three settings.
 
-Mind this, and it is measured: on a running server, **nothing** tells a value
-that will survive from one that will vanish. Even
-`performance_schema.variables_info` reports the same source after a `SET
-GLOBAL` and after a `SET PERSIST`. So do not rely on it to conclude.
+Mind this, and it is measured: `performance_schema.variables_info` reports the
+**same** source after a `SET GLOBAL` and after a `SET PERSIST`, so it does not
+say whether a value will survive. Do not rely on it to conclude.
+
+`performance_schema.persisted_variables` does tell the two apart, and it will
+help you. But it reflects memory rather than the file: it proves the server
+**meant** to persist, not that it will reread. Only the restart proves that.
 
 And before restarting, make sure your configuration is valid: MySQL ships a way
 to check it without starting the server. A refused configuration leaves the

@@ -16,20 +16,29 @@ rather than a file.
 
 ## The trap it makes you meet
 
-**Nothing tells a persisted value from a volatile one on a running server.**
-Measured on MySQL 8.4:
+**The table that reports a value's source does not say whether it will
+survive.** Measured on MySQL 8.4:
 
-| How the value was set | Reported source |
-|---|---|
-| left at the default | `COMPILED` |
-| `SET GLOBAL` | `DYNAMIC` |
-| `SET PERSIST` | `DYNAMIC` too |
+| How the value was set | `variables_info` | `persisted_variables` |
+|---|---|---|
+| left at the default | `COMPILED` | empty |
+| `SET GLOBAL` | `DYNAMIC` | empty |
+| `SET PERSIST` | `DYNAMIC` too | the value is there |
 
-So `performance_schema.variables_info`, the table that reports a value's
-source, answers the **same thing** after a `SET GLOBAL` that will be lost at
-restart and after a `SET PERSIST` that will survive. The source only becomes
-`PERSISTED` **after** the restart, when the value is reread from
-`mysqld-auto.cnf`.
+So `variables_info` answers the **same thing** after a `SET GLOBAL` that will
+be lost at restart and after a `SET PERSIST` that will survive: its source only
+becomes `PERSISTED` **after** the restart. An administrator relying on it to
+check persistence will believe their `SET PERSIST` failed, or will check a
+guarantee that table does not give.
+
+`persisted_variables` does tell the two apart. But it reflects **memory rather
+than the file**: empty `mysqld-auto.cnf` behind the server's back, without
+restarting, and it keeps reporting the value. So it proves the server **meant**
+to persist, not that the file is intact or that it will be reread. A corrupted
+file, or a variable removed in a later version, would only show at restart.
+
+**So the restart remains the only proof of the round trip**, and that is why the
+central test performs one.
 
 A second trap, which the guide names: a **static** variable refuses
 `SET GLOBAL` with an `ERROR 1238 ... is a read only variable`. It is not a

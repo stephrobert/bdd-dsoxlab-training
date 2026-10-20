@@ -2,7 +2,7 @@ title: "Configurer la mémoire, les connexions et le journal lent, pour que ça 
 description: |
   Relever le buffer pool InnoDB et le plafond de connexions, activer le
   journal des requêtes lentes, et faire que tout cela survive à un
-  redémarrage. Noté sur un REDÉMARRAGE, parce que rien d'autre ne prouve la
-  persistance : `SET PERSIST` et `SET GLOBAL` annoncent la même source sur un
-  serveur en marche, mesuré. Et le journal lent est noté sur une requête lente
+  redémarrage. Noté sur un REDÉMARRAGE, parce que rien d'autre ne prouve
+  l'aller-retour : `SET PERSIST` et `SET GLOBAL` annoncent la même source sur
+  un serveur en marche, mesuré. Et le journal lent est noté sur une requête lente
   qui y atterrit vraiment.

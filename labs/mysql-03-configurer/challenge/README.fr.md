@@ -22,11 +22,14 @@ Il ne suffit pas que les variables soient posées : une requête lente devra
 C'est le cœur du lab. Le test **arrêtera et relancera** le serveur, puis
 relira les trois réglages.
 
-Attention, et c'est mesuré : sur un serveur en marche, **rien** ne distingue
-une valeur qui survivra d'une valeur qui disparaîtra. Même
-`performance_schema.variables_info` annonce la même source après un
-`SET GLOBAL` et après un `SET PERSIST`. Ne te fie donc pas à elle pour
-conclure.
+Attention, et c'est mesuré : `performance_schema.variables_info` annonce la
+**même** source après un `SET GLOBAL` et après un `SET PERSIST`, donc elle ne
+dit pas si une valeur survivra. Ne te fie pas à elle pour conclure.
+
+`performance_schema.persisted_variables`, elle, distingue les deux, et elle
+t'aidera. Mais elle reflète la mémoire et non le fichier : elle prouve que le
+serveur a **voulu** persister, pas qu'il relira. Seul le redémarrage le
+prouve.
 
 Et avant de redémarrer, assure-toi que ta configuration est valide : MySQL
 fournit de quoi la contrôler sans démarrer le serveur. Une configuration

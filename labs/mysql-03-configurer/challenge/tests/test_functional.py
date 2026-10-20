@@ -14,21 +14,29 @@ réglages du paquet, et deux précautions qui ne sont pas des ornements :
 
 POURQUOI UN TEST REDÉMARRE LE SERVEUR
 
-Parce que rien d'autre ne prouve la persistance. Mesuré sur MySQL 8.4 le
-2026-10-20, dans un conteneur jetable :
+Parce que rien d'autre ne prouve l'ALLER-RETOUR. Mesuré sur MySQL 8.4 le
+2026-10-20, dans un conteneur jetable, et la première version de ce commentaire
+concluait trop vite :
 
-    valeur laissee au defaut    source COMPILED
-    apres SET GLOBAL            source DYNAMIC
-    apres SET PERSIST           source DYNAMIC   <- la meme chose
+    valeur laissee au defaut   variables_info COMPILED  persisted_variables vide
+    apres SET GLOBAL           variables_info DYNAMIC   persisted_variables vide
+    apres SET PERSIST          variables_info DYNAMIC   la valeur y figure
+    apres RESET PERSIST        -                        vide, valeur en service
 
-`performance_schema.variables_info`, la table qui annonce la SOURCE d'une
-valeur, répond donc identiquement après un `SET GLOBAL` perdu au redémarrage
-et après un `SET PERSIST` qui survivra. La source ne devient `PERSISTED`
-qu'APRÈS le redémarrage, quand la valeur est relue dans `mysqld-auto.cnf`.
+`variables_info` répond donc identiquement après un `SET GLOBAL` perdu au
+redémarrage et après un `SET PERSIST` qui survivra : un test qui lirait cette
+source conclurait au vert sur un réglage volatile.
 
-Un test qui lirait cette source conclurait donc au vert sur un réglage
-volatile. Le seul contrôle qui ne se trompe pas est de redémarrer, et c'est
-pour cela que ce lab existe.
+`persisted_variables`, en revanche, distingue bien les deux. Ce n'est donc pas
+vrai que « rien » ne les distingue, et je l'avais écrit.
+
+MAIS elle reflète la MÉMOIRE et non le fichier, et c'est la sonde qui tranche :
+en vidant `mysqld-auto.cnf` derrière le dos du serveur, SANS redémarrer, la
+table continue d'annoncer la valeur. Elle prouve que le serveur a VOULU
+persister, pas que le fichier est intact ni qu'il sera relu.
+
+Le redémarrage reste donc la seule preuve de l'aller-retour, et c'est une
+raison plus précise que « faute d'autre preuve ».
 
 CE QUE LE JOURNAL LENT EST NOTÉ SUR
 
@@ -237,12 +245,16 @@ def test_une_requete_lente_atterrit_vraiment_dans_le_journal(db1) -> None:
 def test_les_reglages_demandes_survivent_a_un_redemarrage(db1) -> None:
     """LE test du lab, et il redémarre le serveur à dessein.
 
-    Rien d'autre ne prouve la persistance : mesuré sur MySQL 8.4, `SET PERSIST`
+    Rien d'autre ne prouve l'ALLER-RETOUR : mesuré sur MySQL 8.4, `SET PERSIST`
     et `SET GLOBAL` annoncent la MÊME source, `DYNAMIC`, sur un serveur en
     marche. La source ne devient `PERSISTED` qu'après le redémarrage.
 
     Un test qui lirait cette source conclurait donc au vert sur un réglage
     volatile, ce qui est exactement la faute que ce lab existe pour attraper.
+
+    `performance_schema.persisted_variables`, elle, distingue bien les deux, et
+    la docstring du module dit ce qu'elle prouve au juste : l'intention de
+    persister, et non la relecture du fichier.
 
     CE QUE CE TEST EXIGE, ET POURQUOI CE N'EST PAS « RIEN N'A CHANGÉ »
 

@@ -15,10 +15,13 @@ So you are asked to set all three, and to make it **survive a restart**. That
 last point is not a formality: MySQL offers three ways to change a variable,
 and two of them lose the setting at the next start without saying so.
 
-And nothing, on a running server, tells a value that will survive from one that
-will vanish. Even the table that reports a value's **source** answers the same
-thing in both cases. The only way to know is to restart, so that is what the
-check will do.
+One server table, `performance_schema.persisted_variables`, does say what has
+been persisted, and that is useful. But it reflects what the server **meant**
+to write rather than the file's state: empty that file behind its back and the
+table keeps reporting the value. So it proves the intent, not the round trip.
+
+The only way to know whether a value will come back is to restart, so that is
+what the check will do.
 
 The credentials: the `labadmin` account, password `Adm1n!Lab2026`.
 

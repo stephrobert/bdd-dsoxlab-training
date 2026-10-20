@@ -16,20 +16,30 @@ sortie dirigée vers une table plutôt qu'un fichier.
 
 ## Le piège qu'il fait rencontrer
 
-**Rien ne distingue une valeur persistée d'une valeur volatile sur un serveur
-en marche.** Mesuré sur MySQL 8.4 :
+**La table qui annonce la source d'une valeur ne dit pas si elle survivra.**
+Mesuré sur MySQL 8.4 :
 
-| Comment la valeur a été posée | Source annoncée |
-|---|---|
-| laissée au défaut | `COMPILED` |
-| `SET GLOBAL` | `DYNAMIC` |
-| `SET PERSIST` | `DYNAMIC` aussi |
+| Comment la valeur a été posée | `variables_info` | `persisted_variables` |
+|---|---|---|
+| laissée au défaut | `COMPILED` | vide |
+| `SET GLOBAL` | `DYNAMIC` | vide |
+| `SET PERSIST` | `DYNAMIC` aussi | la valeur y figure |
 
-La table `performance_schema.variables_info`, qui annonce la source d'une
-valeur, répond donc la **même chose** après un `SET GLOBAL` perdu au
-redémarrage et après un `SET PERSIST` qui survivra. La source ne devient
-`PERSISTED` qu'**après** le redémarrage, quand la valeur est relue dans
-`mysqld-auto.cnf`.
+`variables_info` répond donc la **même chose** après un `SET GLOBAL` perdu au
+redémarrage et après un `SET PERSIST` qui survivra : sa source ne devient
+`PERSISTED` qu'**après** le redémarrage. Un administrateur qui s'y fie pour
+vérifier sa persistance croira son `SET PERSIST` en échec, ou vérifiera une
+garantie que cette table ne donne pas.
+
+`persisted_variables`, elle, distingue bien les deux. Mais elle reflète la
+**mémoire et non le fichier** : en vidant `mysqld-auto.cnf` derrière le dos du
+serveur, sans redémarrer, elle continue d'annoncer la valeur. Elle prouve donc
+que le serveur a **voulu** persister, pas que le fichier est intact ni qu'il
+sera relu. Un fichier corrompu, ou une variable retirée dans une version
+ultérieure, ne se verraient qu'au redémarrage.
+
+**Le redémarrage reste donc la seule preuve de l'aller-retour**, et c'est pour
+cela que le test central le joue.
 
 Second piège, que le guide nomme : une variable **statique** refuse
 `SET GLOBAL` avec un `ERROR 1238 ... is a read only variable`. Ce n'est pas une

@@ -16,10 +16,14 @@ redémarrage**. Ce dernier point n'est pas une formalité : MySQL offre trois
 façons de changer une variable, et deux d'entre elles perdent le réglage au
 prochain démarrage sans le dire.
 
-Et rien, sur un serveur en marche, ne distingue une valeur qui survivra d'une
-valeur qui disparaîtra. Même la table qui annonce la **source** d'une valeur
-répond la même chose dans les deux cas. La seule façon de savoir est de
-redémarrer, donc c'est ce que la vérification fera.
+Une table du serveur, `performance_schema.persisted_variables`, dit bien ce
+qui a été persisté, et c'est utile. Mais elle reflète ce que le serveur a
+**voulu** écrire, et non l'état du fichier : en vidant ce fichier derrière son
+dos, elle continue d'annoncer la valeur. Elle prouve donc l'intention, pas
+l'aller-retour.
+
+La seule façon de savoir si une valeur reviendra est de redémarrer, donc c'est
+ce que la vérification fera.
 
 Les identifiants : le compte `labadmin`, mot de passe `Adm1n!Lab2026`.
 
