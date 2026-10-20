@@ -9,7 +9,7 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
-## [Unreleased]
+## [0.2.0] - 2026-10-20
 
 ### Added
 

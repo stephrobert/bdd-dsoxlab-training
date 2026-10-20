@@ -9,7 +9,7 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
-## [Non publié]
+## [0.2.0] - 2026-10-20
 
 ### Ajouté
 

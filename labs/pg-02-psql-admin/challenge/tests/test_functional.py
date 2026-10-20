@@ -25,8 +25,6 @@ fausse ne passe pas, et une valeur juste obtenue autrement passe.
 
 from __future__ import annotations
 
-import re
-
 import pytest
 
 from conftest import lab_host, lab_target_host, message

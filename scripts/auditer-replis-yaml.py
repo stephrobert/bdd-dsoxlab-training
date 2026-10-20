@@ -80,10 +80,13 @@ def a_examiner() -> list[pathlib.Path]:
     ]
 
 
+illisibles: list[tuple[pathlib.Path, str]] = []
+
 for chemin in a_examiner():
     try:
         charge = yaml.safe_load(chemin.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, yaml.YAMLError) as erreur:
+        illisibles.append((chemin, str(erreur).splitlines()[0][:120]))
         continue
     if not isinstance(charge, list):
         continue
@@ -99,9 +102,19 @@ for chemin in a_examiner():
                 if isinstance(valeur, str):
                     examiner(chemin, valeur, tache.get("name", "?"))
 
+if illisibles:
+    print(f"{len(illisibles)} fichier(s) que je n'ai PAS pu lire :\n")
+    for chemin, raison in illisibles:
+        print(f"  {chemin}\n    {raison}\n")
+
 if fautifs:
     print(f"{len(fautifs)} commande(s) dont un saut de ligne tombe hors chaine :\n")
     for chemin, nom, extrait in fautifs:
         print(f"  {chemin}\n    tache : {nom}\n    autour: {extrait}\n")
+
+# Un fichier illisible compte dans le verdict : ne pas avoir pu regarder n'est
+# pas la meme chose que n'avoir rien trouve, et confondre les deux est la
+# faute que ce script existe pour attraper.
+if fautifs or illisibles:
     sys.exit(1)
 print("aucune commande cassee par le repli YAML")
