@@ -1,0 +1,51 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet les DEUX machines vierges
+# de tout serveur de base de données.
+#
+# Le réplica d'abord, pour qu'il arrête de solliciter une source qui va
+# disparaître : un canal laissé actif contre un serveur éteint remplit le
+# journal d'erreurs de tentatives toutes les 60 secondes.
+- name: Arrêter la réplication avant de défaire quoi que ce soit
+  hosts: lab_replica
+  become: true
+  tasks:
+    - name: Arrêter le canal et effacer ses identifiants
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="Adm1n!Lab2026" mysql -u labadmin -e "stop replica; reset replica all;"'
+        executable: /bin/bash
+      changed_when: false
+      failed_when: false
+
+- name: Défaire le lab mysql-07-repliquer sur les deux machines
+  hosts: lab_target:lab_replica
+  become: true
+  tasks:
+
+    - name: Retirer le rapport
+      ansible.builtin.file:
+        path: /home/student/rapport-replication.txt
+        state: absent
+
+    - name: Arrêter et désactiver le service
+      ansible.builtin.systemd:
+        name: mysql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger MySQL, MySQL Shell et MariaDB
+      ansible.builtin.shell:
+        cmd: 'DEBIAN_FRONTEND=noninteractive apt-get purge -y "mysql-*" "mariadb-*" 2>/dev/null; DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Effacer données, configuration, journaux, dépôt et clé
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/mysql
+        - /etc/mysql
+        - /var/log/mysql
+        - /etc/apt/sources.list.d/mysql.sources
+        - /etc/apt/keyrings/mysql.asc

@@ -104,3 +104,13 @@ sections:
       - mysql-04-securiser
       - mysql-05-sauvegarder
       - mysql-epreuve-n1
+  - id: mysql-niveau-2
+    title: "MySQL, level 2: operate what is in service"
+    description: "Find the query that costs, prove an index is really used rather than merely present, and reclaim the space a purge did not free. Graded on the execution plan and on the size the table really occupies."
+    labs:
+      - mysql-06-observer
+  - id: mysql-niveau-3
+    title: "MySQL, level 3: replicate and make available"
+    description: "Put a GTID source-replica replication into service, forbid direct writes on the replica, and prove a row written on the source arrives. Graded on the Performance Schema state tables and on a row that really travels."
+    labs:
+      - mysql-07-repliquer

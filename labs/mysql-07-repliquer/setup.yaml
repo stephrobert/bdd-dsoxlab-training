@@ -1,0 +1,247 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# DEUX MACHINES, et deux groupes Ansible que dsoxlab injecte : `lab_target`
+# porte db1, la source, et `lab_replica` porte db2, d'après le rôle déclaré
+# dans `lab.yaml: runtime.targets[].roles`.
+#
+# CE QUE CE SETUP DONNE
+#
+# Deux instances 8.4 qui s'ignorent. Chacune a son `server_id` et son binlog,
+# la source porte la base `appli` remplie, et c'est tout.
+#
+# CE QU'IL NE DONNE PAS, ET QUI EST LE TRAVAIL
+#
+# `gtid_mode` est à OFF sur les deux, il n'existe aucun compte de réplication,
+# aucun canal n'est configuré, et le réplica accepte les écritures. Tout cela
+# est REMIS en l'état à chaque passage : les fichiers de configuration ajoutés
+# par le candidat sont retirés, `mysqld-auto.cnf` est effacé, le service est
+# redémarré, donc `gtid_mode` revient à son défaut sans qu'on ait à redescendre
+# le chemin GTID à l'envers.
+#
+# POURQUOI `bind-address = 0.0.0.0` ICI, ET NON LA BOUCLE LOCALE
+#
+# Le réplica doit joindre la source par le réseau. Les autres labs MySQL
+# referment l'écoute sur `127.0.0.1`, et c'est leur sujet ; celui-ci a besoin
+# du contraire. Le réseau du lab est isolé, et restreindre l'écoute est
+# l'affaire de mysql-01.
+#
+# LE `log-bin` EST DÉCLARÉ, PAS SUPPOSÉ
+#
+# Le binlog est actif par défaut depuis MySQL 8.0, mais je ne l'ai pas mesuré
+# sur les paquets d'Oracle pour Debian : ma mesure l'avait forcé. On le déclare
+# donc, ce qu'un déploiement réel fait de toute façon.
+#
+# UNE CONTRAINTE D'ÉCRITURE
+#
+# Chaque commande tient sur UNE ligne. En YAML, un repli `>` conserve le saut
+# de ligne dès que l'une des deux lignes est plus indentée : anodin dans une
+# chaîne SQL, fatal entre deux mots d'un shell.
+
+# ── Les deux serveurs : MySQL, le compte d'administration, le binlog ───────
+- name: Installer MySQL sur la source et sur le réplica
+  hosts: lab_target:lab_replica
+  become: true
+  vars:
+    mdp_root: "R00t!Lab2026"
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    conf_dir: /etc/mysql/mysql.conf.d
+  tasks:
+
+    - name: Installer de quoi vérifier une signature
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    # La clé 2025 et non la 2023 : cette dernière a EXPIRÉ le 2025-10-22.
+    - name: Récupérer la clé de signature d'Oracle, en cours de validité
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2025
+        dest: /etc/apt/keyrings/mysql.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt MySQL 8.4 LTS, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: mysql
+        types: deb
+        uris: https://repo.mysql.com/apt/debian
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: mysql-8.4-lts
+        signed_by: /etc/apt/keyrings/mysql.asc
+        state: present
+
+    - name: Pré-configurer le mot de passe root
+      ansible.builtin.shell:
+        cmd: 'printf "%s\n%s\n" "mysql-community-server mysql-community-server/root-pass password {{ mdp_root }}" "mysql-community-server mysql-community-server/re-root-pass password {{ mdp_root }}" | debconf-set-selections'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Installer MySQL 8.4 LTS
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    # ── Défaire le travail d'un passage précédent ────────────────────
+    #
+    # Les fichiers du candidat sont retirés AVANT que le nôtre soit écrit :
+    # `mysql.conf.d` est lu dans l'ordre alphabétique, et un `z-zz-*.cnf`
+    # l'emporterait sur le nôtre.
+    - name: Lister les fichiers de configuration ajoutés
+      ansible.builtin.find:
+        paths:
+          - "{{ conf_dir }}"
+          - /etc/mysql/conf.d
+        patterns: "*.cnf"
+        excludes: "mysqld.cnf"
+      register: cnf_ajoutes
+
+    - name: Les retirer
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ cnf_ajoutes.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    # `server-id` dérivé du GROUPE et non d'un nom d'hôte écrit en dur : la
+    # source est le seul membre de `lab_target`, le réplica celui de
+    # `lab_replica`.
+    - name: Déclarer l'identité du serveur, son binlog et son écoute
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-repl.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [mysqld]
+          server-id           = {{ 1 if 'lab_target' in group_names else 2 }}
+          log-bin             = binlog
+          bind-address        = 0.0.0.0
+          mysqlx-bind-address = 127.0.0.1
+
+    - name: Effacer ce qu'un SET PERSIST aurait laissé
+      ansible.builtin.file:
+        path: /var/lib/mysql/mysqld-auto.cnf
+        state: absent
+
+    - name: Démarrer le service, activé au démarrage
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+        enabled: true
+
+    - name: Attendre que le serveur réponde
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        timeout: 60
+
+    - name: Créer le compte d'administration
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_root }}" mysql -u root -e "create user if not exists ''{{ admin }}''@''localhost'' identified by ''{{ mdp_admin }}''; grant all privileges on *.* to ''{{ admin }}''@''localhost'' with grant option;"'
+        executable: /bin/bash
+      changed_when: false
+
+# ── Le réplica : plus aucun canal, et les écritures ouvertes ──────────────
+- name: Remettre le réplica dans son état de départ
+  hosts: lab_replica
+  become: true
+  vars:
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+  tasks:
+
+    # `reset replica all` efface le canal ET ses identifiants : sans lui, un
+    # deuxième passage trouverait la réplication déjà configurée, et quatre
+    # tests seraient verts avant tout travail.
+    - name: Effacer tout canal de réplication d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "stop replica; reset replica all;"'
+        executable: /bin/bash
+      changed_when: true
+      failed_when: false
+
+    - name: Rendre le réplica inscriptible, pour que le lab ait du travail
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "set global super_read_only = off; set global read_only = off;"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Retirer la base applicative d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop database if exists appli"'
+        executable: /bin/bash
+      changed_when: true
+
+    # ── AMORCER LE RÉPLICA, et c'est indispensable ───────────────────
+    #
+    # Mesuré le 2026-10-20 sans cette tâche : l'applicateur s'arrête sur
+    # « ERROR 1049 : Unknown database 'appli' ». La raison est que le setup
+    # crée la base AVANT que GTID soit actif, donc ses transactions sont
+    # ANONYMES, et un réplica en position automatique ne demande que des GTID.
+    # La base n'arrive donc jamais, et la première ligne qui porte un GTID
+    # tombe sur une base absente.
+    #
+    # C'est le vrai problème de toute mise en réplication : un réplica part
+    # d'une COPIE, pas de rien. En production on le sème avec une sauvegarde.
+    # Ce lab pose cet acquis plutôt que de l'enseigner, parce que le dump et
+    # `gtid_purged` sont le sujet de mysql-05.
+    #
+    # La base est semée À L'IDENTIQUE de la source : mêmes colonnes, mêmes
+    # trois lignes. Les deux créations sont anonymes et ne se croisent donc
+    # jamais.
+    - name: Semer le réplica comme une restauration l'aurait fait
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "create database appli; create table appli.clients (id int auto_increment primary key, nom varchar(60) not null, inscrit_le datetime default current_timestamp) engine = InnoDB; insert into appli.clients (nom) values (''Durand''), (''Martin''), (''Nguyen'');"'
+        executable: /bin/bash
+      changed_when: true
+
+# ── La source : la base applicative, et aucun compte de réplication ──────
+- name: Préparer la source
+  hosts: lab_target
+  become: true
+  vars:
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    base: appli
+  tasks:
+
+    - name: Retirer le compte de réplication d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop user if exists ''repl''@''%'', ''repl''@''db2.lab'';"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Poser la base applicative et sa table
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop database if exists {{ base }}; create database {{ base }}; create table {{ base }}.clients (id int auto_increment primary key, nom varchar(60) not null, inscrit_le datetime default current_timestamp) engine = InnoDB; insert into {{ base }}.clients (nom) values (''Durand''), (''Martin''), (''Nguyen'');"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-replication.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport de mise en service de la replication.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que les SERVEURS
+          # repondent VRAIMENT, une fois ton travail fait. Les lignes de
+          # commentaire ne sont pas lues par le test : seules les lignes
+          # « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          etat_de_la_connexion = A_COMPLETER
+          uuid_de_la_source = A_COMPLETER
+          lignes_sur_le_replica = A_COMPLETER

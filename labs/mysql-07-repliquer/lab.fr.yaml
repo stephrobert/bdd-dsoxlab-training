@@ -1,0 +1,9 @@
+title: "Répliquer avec GTID, et prouver qu'une ligne écrite sur la source arrive"
+description: |
+  Mettre en service une réplication GTID entre deux serveurs, faire que le
+  réplica refuse toute écriture directe, et prouver qu'une ligne écrite sur la
+  source arrive. Noté sur les tables d'état du Performance Schema et sur une
+  ligne qui voyage vraiment, jamais sur `SHOW REPLICA STATUS`. Deux pièges sont
+  mesurés : `gtid_mode` refuse de passer de OFF à ON d'un coup, et le greffon
+  d'authentification par défaut bloque la connexion du réplica sur une erreur
+  2061.

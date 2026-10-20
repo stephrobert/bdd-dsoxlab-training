@@ -1,0 +1,42 @@
+# Canonique en anglais. `lab.fr.yaml` surcharge titre et description.
+#
+# Deuxième lab du catalogue à DEUX machines, après pg-09-repliquer. Le rôle
+# `replica` crée le groupe Ansible `lab_replica` et fait entrer db2 dans
+# l'isolation du lab.
+id: mysql-07-repliquer
+title: "Replicate with GTID, and prove a row written on the source arrives"
+description: |
+  Put a GTID replication in service between two servers, make the replica
+  refuse any direct write, and prove that a row written on the source arrives.
+  Graded on the state tables of the Performance Schema and on a row that really
+  travels, never on `SHOW REPLICA STATUS`. Two traps are measured: `gtid_mode`
+  refuses to go from OFF to ON in one step, and the default authentication
+  plugin blocks the replica's connection with error 2061.
+section: mysql-niveau-3
+level: mysql-niveau-3
+lab_type: lab
+difficulty: advanced
+estimated_time: "50m"
+skills:
+  - mysql
+  - replication
+  - haute-disponibilite
+  - exploitation
+distros:
+  - debian13
+doc_url: https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/replication/
+certification_tags: []
+runtime:
+  type: vm
+  targets:
+    - name: db1
+      host: db1.lab
+      label_en: "Debian 13"
+      label_fr: "Debian 13"
+      roles:
+        replica: db2.lab
+  default: db1
+validation:
+  functional: true
+  security: false
+  persistence_after_reboot: false

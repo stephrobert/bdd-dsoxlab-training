@@ -35,3 +35,9 @@ sections:
   - id: mysql-niveau-1
     title: "MySQL, niveau 1 : mettre en service une instance sûre"
     description: "Installer MySQL 8.4 LTS depuis le dépôt Oracle, le piloter avec le client mysql et MySQL Shell, le configurer, contrôler l'accès par rôles et TLS, et le sauvegarder en logique. Un parcours PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas l'un pour atteindre l'autre. Le niveau est complet : cinq labs et une épreuve, chacun prouvé sur une instance réelle."
+  - id: mysql-niveau-2
+    title: "MySQL, niveau 2 : exploiter ce qui est en service"
+    description: "Trouver la requête qui coûte, prouver qu'un index sert vraiment au lieu d'exister seulement, et récupérer l'espace qu'une purge n'a pas rendu. Noté sur le plan d'exécution et sur la taille que la table occupe vraiment."
+  - id: mysql-niveau-3
+    title: "MySQL, niveau 3 : répliquer et rendre disponible"
+    description: "Mettre en service une réplication GTID source-réplica, interdire les écritures directes sur le réplica, et prouver qu'une ligne écrite sur la source arrive. Noté sur les tables d'état du Performance Schema et sur une ligne qui voyage vraiment."
