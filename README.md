@@ -10,11 +10,22 @@ did not design.
 
 ## What it is
 
-At the end, a learner can take a bare Debian machine and return a
-PostgreSQL service that refuses cleartext connections, grants no more
-rights than needed, says what it is doing, survives a dropped table, and
-has a standby following it. Each of those is proven by tests that read the
-system's state, not by a checklist.
+At the end, a learner can take a bare Debian machine and return a database
+service that refuses cleartext connections, grants no more rights than
+needed, says what it is doing, survives a dropped table, and has a standby
+following it. Each of those is proven by tests that read the system's
+state, not by a checklist.
+
+**Two engines, two PARALLEL tracks.** You pick yours, you do not go through
+one to reach the other:
+
+| Track | What it covers |
+|---|---|
+| PostgreSQL, levels 1 to 3 | install, administer, configure, secure, back up, observe, archive, restore point-in-time, replicate |
+| MySQL, level 1 | install, drive the client and MySQL Shell, configure with persistence, grant through roles with TLS, back up logically, then a **graded exam** measuring the five together |
+
+The `mysql-epreuve-n1` exam is the catalog's first GRADED lab: ten tasks,
+100 points, 70 to pass, and `dsoxlab submit` returns a verdict.
 
 **The order matters, and it is not the order of the topics.** It follows
 what a machine needs before the next step is even possible: an instance
@@ -37,11 +48,12 @@ is exact and measured against `meta.yml`.
 - **`terraform`** and **`ansible-playbook`**, which every `vm` lab needs
 - **libvirt/KVM 8.0 or above**, the hypervisor the machines run on
 
-Nothing PostgreSQL-related is needed on your own machine: the labs install
-it inside the virtual machines, from the PGDG repository, which is itself
-the subject of the first lab.
+Nothing PostgreSQL- or MySQL-related is needed on your own machine: the
+labs install them inside the virtual machines, from the PGDG repository and
+from the Oracle repository, which is itself the subject of each track's
+first lab.
 
-**All nine labs are `vm` labs**, so `dsoxlab provision` is always needed.
+**All fifteen labs are `vm` labs**, so `dsoxlab provision` is always needed.
 The catalog declares three Debian 13 machines (`db1.lab`, `db2.lab`,
 `db3.lab`) on the `lab-bdd` network, each with 2 GB of RAM, 2 vCPU and
 20 GB of disk: about 6 GB of RAM and 60 GB of disk in all.

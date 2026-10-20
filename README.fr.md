@@ -11,10 +11,22 @@ base qu'ils n'ont pas conçue.
 ## Ce que c'est
 
 À la fin, un apprenant sait prendre une machine Debian nue et rendre un
-service PostgreSQL qui refuse les connexions en clair, n'accorde pas plus
-de droits que nécessaire, dit ce qu'il fait, survit à une table supprimée,
-et porte un secondaire qui le suit. Chacun de ces points est prouvé par
-des tests qui lisent l'état du système, et non par une liste à cocher.
+service de base de données qui refuse les connexions en clair, n'accorde
+pas plus de droits que nécessaire, dit ce qu'il fait, survit à une table
+supprimée, et porte un secondaire qui le suit. Chacun de ces points est
+prouvé par des tests qui lisent l'état du système, et non par une liste à
+cocher.
+
+**Deux moteurs, deux parcours PARALLÈLES.** On choisit le sien, on ne
+traverse pas l'un pour atteindre l'autre :
+
+| Parcours | Ce qu'il couvre |
+|---|---|
+| PostgreSQL, niveaux 1 à 3 | installer, piloter, configurer, sécuriser, sauvegarder, observer, archiver, restaurer au point dans le temps, répliquer |
+| MySQL, niveau 1 | installer, piloter le client et MySQL Shell, configurer avec persistance, accorder par rôles avec TLS, sauvegarder en logique, puis une **épreuve notée** qui mesure les cinq ensemble |
+
+L'épreuve `mysql-epreuve-n1` est le premier lab ÉVALUÉ du catalogue : dix
+tâches, 100 points, 70 pour réussir, et `dsoxlab submit` rend un verdict.
 
 **L'ordre compte, et ce n'est pas celui des sujets.** Il suit ce dont une
 machine a besoin pour que l'étape suivante soit seulement possible : une
@@ -37,11 +49,12 @@ l'apprenant : elle est donc exacte, et mesurée sur le `meta.yml`.
 - **`terraform`** et **`ansible-playbook`**, dont tout lab `vm` a besoin
 - **libvirt/KVM 8.0 ou plus**, l'hyperviseur qui porte les machines
 
-Rien de PostgreSQL n'est nécessaire sur ton poste : les labs l'installent
-dans les machines virtuelles, depuis le dépôt PGDG, ce qui est justement
-le sujet du premier lab.
+Rien de PostgreSQL ni de MySQL n'est nécessaire sur ton poste : les labs
+les installent dans les machines virtuelles, depuis le dépôt PGDG et depuis
+le dépôt Oracle, ce qui est justement le sujet du premier lab de chaque
+parcours.
 
-**Les neuf labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
+**Les quinze labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
 nécessaire. Le catalogue déclare trois machines Debian 13 (`db1.lab`,
 `db2.lab`, `db3.lab`) sur le réseau `lab-bdd`, chacune avec 2 Go de RAM,
 2 vCPU et 20 Go de disque : environ 6 Go de RAM et 60 Go de disque en tout.

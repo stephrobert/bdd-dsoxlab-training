@@ -9,6 +9,57 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.3.0] - 2026-10-20
+
+### Ajouté
+
+- **Le niveau 1 MySQL, complet : cinq labs et une épreuve notée**, chacun
+  prouvé dans les deux sens (0 avant le travail, 100 après). C'est un parcours
+  PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas
+  l'un pour atteindre l'autre.
+
+  | Lab | Ce qu'il prouve |
+  |---|---|
+  | `mysql-01-installer` | l'instance 8.4 LTS vient du dépôt Oracle, avec une clé dont les SOUS-CLÉS sont aussi contrôlées en expiration, et les deux portes sont fermées. Les paquets Oracle ne livrent aucun `bind-address`, la variable vaut `*` par défaut, et `bind-address` seul ne restreint pas le port 33060, qui a sa propre variable. |
+  | `mysql-02-client-admin` | une connexion qui aboutit vraiment sans mot de passe tapé et sans terminal. `mysql_config_editor` lit `/dev/tty` dès qu'un terminal de contrôle existe, et Ansible en fournit toujours un. |
+  | `mysql-03-configurer` | noté sur un REDÉMARRAGE : `performance_schema.variables_info` annonce la même source après un `SET GLOBAL` qui sera perdu et un `SET PERSIST` qui survivra. Le journal lent est noté sur une requête lente qui y atterrit vraiment. |
+  | `mysql-04-securiser` | un rôle accordé n'est PAS un rôle actif, et aucune table du catalogue ne le dit. Le clair refusé, le chiffré debout, et le TLS exigé sur le COMPTE plutôt que dans un fichier. |
+  | `mysql-05-sauvegarder` | `mysqldump --help` annonce `routines FALSE` : un dump pris sans `--routines` omet les procédures stockées tout en gardant les triggers, et la restauration réussit quand même avec un code 0. Noté sur le fichier ET sur la base restaurée. |
+  | `mysql-epreuve-n1` | l'épreuve du niveau : dix tâches, 100 points, 70 pour réussir. Premier lab ÉVALUÉ du catalogue (`lab_type: challenge` avec `exam_passing_score`), où `dsoxlab submit` rend un verdict. |
+
+- `tests/test_documentation_executable.py`, qui confronte les options citées
+  dans les Markdown à ce que le `--help` des scripts accepte vraiment. Une
+  commande documentée qui n'existe plus envoie un lecteur dans un mur, et rien
+  dans le dépôt ne le disait.
+
+### Modifié
+
+- `scripts/valider-labs.py` distingue désormais un conteneur qu'un lab a
+  LAISSÉ d'un conteneur qu'il ne pouvait pas avoir créé. Le pilote accusait
+  `pg-02` d'un conteneur lancé par une autre session, et une accusation qui
+  nomme le mauvais lab est pire que le silence.
+
+- `README.md` et `README.fr.md` n'annoncent plus neuf labs, et décrivent les
+  deux parcours parallèles ainsi que l'épreuve.
+
+### Corrigé
+
+- **Une affirmation de moi dans `mysql-03-configurer` était trop forte** :
+  « rien d'autre ne prouve la persistance ».
+  `performance_schema.persisted_variables` distingue bien un `SET GLOBAL` d'un
+  `SET PERSIST`. Mesuré sur 8.4.10, elle reflète la MÉMOIRE et non le fichier :
+  en vidant `mysqld-auto.cnf` derrière le dos du serveur, la table continue
+  d'annoncer la valeur. Elle prouve donc l'intention de persister, et seul le
+  redémarrage prouve l'aller-retour. Neuf documents corrigés, dont les deux
+  descriptions de `lab.yaml` et la docstring du test central.
+
+- `pg-02-psql-admin` : un `.pgpass` aux droits trop larges n'est PAS ignoré en
+  silence. libpq l'avertit, et seul le cas de l'hôte qui ne correspond pas est
+  muet, les deux finissant sur le même `fe_sendauth: no password supplied`.
+
+- `RELEASING.md` et `RELEASING.fr.md` ne citent plus une option `--deux-sens`
+  que le script n'a jamais acceptée : c'est `--check --negative`.
+
 ## [0.2.0] - 2026-10-20
 
 ### Ajouté
