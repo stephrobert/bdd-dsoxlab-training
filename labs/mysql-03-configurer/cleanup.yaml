@@ -1,0 +1,39 @@
+---
+# Joué par `dsoxlab clean` et `dsoxlab reset` : remet la machine vierge de
+# tout serveur de base de données, comme les labs MySQL précédents.
+- name: Défaire le lab mysql-03-configurer
+  hosts: lab_target
+  become: true
+  tasks:
+
+    - name: Retirer le rapport et le login path de student
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /home/student/rapport-configuration.txt
+        - /home/student/.mylogin.cnf
+
+    - name: Arrêter et désactiver le service
+      ansible.builtin.systemd:
+        name: mysql
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Purger MySQL, MySQL Shell et MariaDB
+      ansible.builtin.shell:
+        cmd: 'DEBIAN_FRONTEND=noninteractive apt-get purge -y "mysql-*" "mariadb-*" 2>/dev/null; DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Effacer données, configuration, journaux, dépôt et clé
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/mysql
+        - /etc/mysql
+        - /var/log/mysql
+        - /etc/apt/sources.list.d/mysql.sources
+        - /etc/apt/keyrings/mysql.asc

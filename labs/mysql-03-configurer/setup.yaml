@@ -1,0 +1,184 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE QUE CE SETUP DONNE
+#
+# L'état d'arrivée de mysql-02 : une instance 8.4 fermée sur sa boucle locale,
+# le compte `labadmin`, et un login path `lab` pour `student` AVEC la socket
+# déclarée, sans quoi mysqlsh ne joint rien.
+#
+# CE QU'IL NE DONNE PAS, ET QUI EST LE TRAVAIL
+#
+# Les réglages du paquet, et rien d'autre : buffer pool à son défaut compilé,
+# plafond de connexions à 151, journal des requêtes lentes ÉTEINT. Et tout
+# `mysqld-auto.cnf` d'un passage précédent est effacé, sans quoi le travail de
+# la fois d'avant survivrait au `clean`.
+- name: Préparer le lab mysql-03-configurer
+  hosts: lab_target
+  become: true
+  vars:
+    mdp_root: "R00t!Lab2026"
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    profil: lab
+    conf_dir: /etc/mysql/mysql.conf.d
+  tasks:
+
+    - name: Installer de quoi vérifier une signature
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    # La clé 2025 et non la 2023 : cette dernière a EXPIRÉ le 2025-10-22, et
+    # apt refuse alors le dépôt en répondant « is not signed », qui ne parle
+    # pas d'expiration. Mesuré le 2026-10-20.
+    - name: Récupérer la clé de signature d'Oracle, en cours de validité
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2025
+        dest: /etc/apt/keyrings/mysql.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt MySQL 8.4 LTS, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: mysql
+        types: deb
+        uris: https://repo.mysql.com/apt/debian
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: mysql-8.4-lts
+        signed_by: /etc/apt/keyrings/mysql.asc
+        state: present
+
+    - name: Pré-configurer le mot de passe root
+      ansible.builtin.shell:
+        cmd: 'printf "%s\n%s\n" "mysql-community-server mysql-community-server/root-pass password {{ mdp_root }}" "mysql-community-server mysql-community-server/re-root-pass password {{ mdp_root }}" | debconf-set-selections'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Installer MySQL 8.4 LTS
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Restreindre l'écoute des deux protocoles à la boucle locale
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-bind.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [mysqld]
+          bind-address        = 127.0.0.1
+          mysqlx-bind-address = 127.0.0.1
+
+    # ── L'état de départ : les réglages du paquet ───────────────────────
+    #
+    # Effacer `mysqld-auto.cnf` est INDISPENSABLE : c'est là que `SET PERSIST`
+    # écrit, donc sans cela le travail d'un passage précédent survivrait et
+    # trois tests seraient verts avant tout travail.
+    - name: Effacer ce qu'un SET PERSIST aurait laissé
+      ansible.builtin.file:
+        path: /var/lib/mysql/mysqld-auto.cnf
+        state: absent
+
+    - name: Retirer les réglages d'un passage précédent
+      ansible.builtin.file:
+        path: "{{ conf_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - z-lab-perfschema.cnf
+        - zz-lab-perfschema-on.cnf
+        - zz-lab-reglages.cnf
+
+    # Le journal lent EXPLICITEMENT éteint, et son fichier retiré : le test
+    # exige qu'une requête lente y atterrisse, donc un fichier laissé par un
+    # passage précédent le rendrait vert sans travail.
+    - name: Éteindre le journal des requêtes lentes
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-journal-eteint.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # Le journal lent est eteint A DESSEIN : le rallumer est le travail du
+          # lab. Le fichier porte un nom qui passe AVANT ceux que l'apprenant
+          # ajoutera, pour qu'il puisse le surcharger.
+          [mysqld]
+          slow_query_log = OFF
+
+    - name: Effacer un journal lent d'un passage précédent
+      ansible.builtin.shell:
+        cmd: 'rm -f /var/log/mysql/*slow*.log /var/lib/mysql/*slow*.log 2>/dev/null; true'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Démarrer le service sur l'état de départ
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+        enabled: true
+
+    - name: Attendre que le serveur réponde
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        timeout: 60
+
+    - name: Créer le compte d'administration
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_root }}" mysql -u root -e "create user if not exists ''{{ admin }}''@''localhost'' identified by ''{{ mdp_admin }}''; grant all privileges on *.* to ''{{ admin }}''@''localhost'' with grant option;"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── Le login path, acquis de mysql-02 ──────────────────────────────
+    #
+    # `setsid` est OBLIGATOIRE : `mysql_config_editor` lit son mot de passe sur
+    # /dev/tty quand un terminal existe, et Ansible en fournit un par
+    # `ssh -tt`. Sans lui, la tâche attend indéfiniment. Mesuré le 2026-10-20.
+    #
+    # Et la socket est DÉCLARÉE : mysqlsh emploie un chemin compilé en dur que
+    # Debian n'emploie pas, et dont le répertoire lui est interdit.
+    - name: Relever la socket que le serveur emploie
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -N -B -e "select @@socket"'
+        executable: /bin/bash
+      register: socket_serveur
+      changed_when: false
+
+    - name: Poser le login path de student
+      ansible.builtin.shell:
+        cmd: 'rm -f /home/student/.mylogin.cnf; printf "%s\n" "{{ mdp_admin }}" | setsid env HOME=/home/student mysql_config_editor set --login-path={{ profil }} --socket="{{ socket_serveur.stdout | trim }}" --user={{ admin }} --password'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Donner le fichier d'identifiants à student
+      ansible.builtin.file:
+        path: /home/student/.mylogin.cnf
+        owner: student
+        group: student
+        mode: "0600"
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-configuration.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport de configuration de l'instance MySQL.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que le serveur
+          # repond APRES son redemarrage. Les lignes de commentaire ne sont
+          # pas lues par le test : seules les lignes « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          buffer_pool_mo = A_COMPLETER
+          long_query_time = A_COMPLETER
+          source_du_buffer_pool = A_COMPLETER

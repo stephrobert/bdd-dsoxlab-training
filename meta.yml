@@ -100,3 +100,4 @@ sections:
     labs:
       - mysql-01-installer
       - mysql-02-client-admin
+      - mysql-03-configurer
