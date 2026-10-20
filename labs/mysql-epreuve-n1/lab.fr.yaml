@@ -1,0 +1,8 @@
+title: "Épreuve du niveau 1 : reprendre une instance laissée grande ouverte"
+description: |
+  Une instance en service, héritée telle quelle : à l'écoute sur toutes les
+  interfaces, un compte qui peut tout, aucun réglage, aucune sauvegarde. La
+  ramener à un état que tu accepterais d'astreinte, et le prouver. Dix tâches
+  notées, 100 points, 70 pour réussir. Rien n'est réexpliqué : les cinq labs du
+  niveau l'ont enseigné, cette épreuve le mesure. Notée sur l'état réel, après
+  un redémarrage.

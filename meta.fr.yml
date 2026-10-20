@@ -34,4 +34,4 @@ sections:
     description: "Réplication en flux, point d'entrée stable, haute disponibilité avec Patroni et réplication logique. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."
   - id: mysql-niveau-1
     title: "MySQL, niveau 1 : mettre en service une instance sûre"
-    description: "Installer MySQL 8.4 LTS depuis le dépôt Oracle, le piloter avec le client mysql et MySQL Shell, le configurer, contrôler l'accès par rôles et TLS, et le sauvegarder en logique. Un parcours PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas l'un pour atteindre l'autre. Les labs s'ajoutent à mesure qu'ils sont écrits et prouvés."
+    description: "Installer MySQL 8.4 LTS depuis le dépôt Oracle, le piloter avec le client mysql et MySQL Shell, le configurer, contrôler l'accès par rôles et TLS, et le sauvegarder en logique. Un parcours PARALLÈLE à celui de PostgreSQL : on choisit son moteur, on ne traverse pas l'un pour atteindre l'autre. Le niveau est complet : cinq labs et une épreuve, chacun prouvé sur une instance réelle."

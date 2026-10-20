@@ -1,0 +1,203 @@
+---
+# Joué par `dsoxlab run` avant d'ouvrir la session.
+#
+# CE QUE CE SETUP DONNE : l'instance dont personne ne voulait.
+#
+# Elle tourne, elle écoute sur TOUTES les interfaces, un compte `app_tout`
+# déclaré `@'%'` peut tout faire partout, aucun réglage n'a été touché, et il
+# n'existe aucune sauvegarde.
+#
+# POURQUOI CE SETUP DÉFAIT AUTANT DE CHOSES
+#
+# C'est une épreuve, donc le barème est exigeant, donc un seul test vert avant
+# tout travail suffirait à la fausser. Le setup REMET donc l'instance dans son
+# état dégradé à chaque passage : il recrée `app_tout`, rétablit l'écoute sur
+# 0.0.0.0, efface `mysqld-auto.cnf`, RETIRE les fichiers de configuration que
+# le candidat aurait ajoutés, et supprime rôle, compte de service, base
+# restaurée et sauvegardes.
+#
+# Sans ce désassemblage, un deuxième passage noterait le travail du premier.
+#
+# UNE CONTRAINTE D'ÉCRITURE
+#
+# Chaque commande tient sur UNE ligne. En YAML, un repli `>` conserve le saut
+# de ligne dès que l'une des deux lignes est plus indentée : anodin dans une
+# chaîne SQL, fatal entre deux mots d'un shell.
+- name: Préparer l'épreuve mysql-epreuve-n1
+  hosts: lab_target
+  become: true
+  vars:
+    mdp_root: "R00t!Lab2026"
+    admin: labadmin
+    mdp_admin: "Adm1n!Lab2026"
+    base: appli
+    base_restauree: appli_restauree
+    compte_laxiste: app_tout
+    mdp_laxiste: "T0ut!Lab2026"
+    compte_service: appli_svc
+    sauvegardes: /home/student/sauvegardes
+    conf_dir: /etc/mysql/mysql.conf.d
+  tasks:
+
+    - name: Installer de quoi vérifier une signature
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    # La clé 2025 et non la 2023 : cette dernière a EXPIRÉ le 2025-10-22.
+    - name: Récupérer la clé de signature d'Oracle, en cours de validité
+      ansible.builtin.get_url:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2025
+        dest: /etc/apt/keyrings/mysql.asc
+        mode: "0644"
+
+    - name: Déclarer le dépôt MySQL 8.4 LTS, lié à sa clé
+      ansible.builtin.deb822_repository:
+        name: mysql
+        types: deb
+        uris: https://repo.mysql.com/apt/debian
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: mysql-8.4-lts
+        signed_by: /etc/apt/keyrings/mysql.asc
+        state: present
+
+    - name: Pré-configurer le mot de passe root
+      ansible.builtin.shell:
+        cmd: 'printf "%s\n%s\n" "mysql-community-server mysql-community-server/root-pass password {{ mdp_root }}" "mysql-community-server mysql-community-server/re-root-pass password {{ mdp_root }}" | debconf-set-selections'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Installer MySQL 8.4 LTS
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    # ── Remettre la configuration dans son état dégradé ────────────────
+    #
+    # Les fichiers que le candidat aurait posés sont retirés AVANT que le
+    # nôtre soit écrit : sinon un `z-zz-candidat.cnf` d'un passage précédent
+    # l'emporterait sur lui, l'ordre de lecture étant alphabétique.
+    - name: Lister les fichiers de configuration ajoutés
+      ansible.builtin.find:
+        paths:
+          - "{{ conf_dir }}"
+          - /etc/mysql/conf.d
+        patterns: "*.cnf"
+        excludes: "mysqld.cnf"
+      register: cnf_ajoutes
+
+    - name: Les retirer
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ cnf_ajoutes.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Rétablir l'écoute sur toutes les interfaces
+      ansible.builtin.copy:
+        dest: "{{ conf_dir }}/z-lab-bind.cnf"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [mysqld]
+          bind-address        = 0.0.0.0
+          mysqlx-bind-address = 0.0.0.0
+
+    - name: Effacer ce qu'un SET PERSIST aurait laissé
+      ansible.builtin.file:
+        path: /var/lib/mysql/mysqld-auto.cnf
+        state: absent
+
+    - name: Démarrer le service, activé au démarrage
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+        enabled: true
+
+    - name: Attendre que le serveur réponde
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        timeout: 60
+
+    - name: Créer le compte d'administration
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_root }}" mysql -u root -e "create user if not exists ''{{ admin }}''@''localhost'' identified by ''{{ mdp_admin }}''; grant all privileges on *.* to ''{{ admin }}''@''localhost'' with grant option;"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── Défaire le travail d'un passage précédent ──────────────────────
+    - name: Retirer rôle, compte de service et base restaurée
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop role if exists role_appli; drop user if exists ''{{ compte_service }}''@''127.0.0.1'', ''{{ compte_service }}''@''localhost'', ''{{ compte_service }}''@''%''; drop database if exists {{ base_restauree }};"'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Vider le répertoire de sauvegardes, puis le rendre à student
+      ansible.builtin.file:
+        path: "{{ sauvegardes }}"
+        state: "{{ item }}"
+        owner: student
+        group: student
+        mode: "0755"
+      loop:
+        - absent
+        - directory
+
+    # ── La base, ses tables, sa procédure et son trigger ───────────────
+    - name: Poser la base applicative et deux tables
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "create database if not exists {{ base }}; create table if not exists {{ base }}.clients (id int auto_increment primary key, nom varchar(100) not null) engine = InnoDB; create table if not exists {{ base }}.commandes (id int auto_increment primary key, client_id int, montant decimal(10,2)) engine = InnoDB;"'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Poser la procédure stockée et le trigger
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop procedure if exists {{ base }}.chiffre_affaires; create procedure {{ base }}.chiffre_affaires() select sum(montant) as total from {{ base }}.commandes; drop trigger if exists {{ base }}.montant_positif; create trigger {{ base }}.montant_positif before insert on {{ base }}.commandes for each row set new.montant = abs(new.montant);"'
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Remplir les deux tables, une seule fois
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "insert into {{ base }}.clients (nom) select * from (select ''Durand'' union all select ''Martin'' union all select ''Nguyen'') as v where not exists (select 1 from {{ base }}.clients); insert into {{ base }}.commandes (client_id, montant) select * from (select 1, 42.00 union all select 2, 13.50) as v where not exists (select 1 from {{ base }}.commandes);"'
+        executable: /bin/bash
+      changed_when: false
+
+    # ── LE compte qu'il faudra faire disparaître ───────────────────────
+    #
+    # Recréé à chaque passage, sans quoi la première tâche de l'épreuve
+    # serait verte avant que le candidat ait ouvert une session.
+    - name: Recréer le compte tout-puissant, déclaré depuis n'importe où
+      ansible.builtin.shell:
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop user if exists ''{{ compte_laxiste }}''@''%''; create user ''{{ compte_laxiste }}''@''%'' identified by ''{{ mdp_laxiste }}''; grant all privileges on *.* to ''{{ compte_laxiste }}''@''%'';"'
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Déposer le rapport à remplir
+      ansible.builtin.copy:
+        dest: /home/student/rapport-epreuve.txt
+        owner: student
+        group: student
+        mode: "0644"
+        content: |
+          # Rapport de l'epreuve du niveau 1 MySQL.
+          #
+          # Renseigne les trois valeurs ci-dessous avec ce que le SERVEUR
+          # repond VRAIMENT, une fois ton travail fait. Les lignes de
+          # commentaire ne sont pas lues par le test : seules les lignes
+          # « cle = valeur » comptent.
+          #
+          # Ne supprime pas ces lignes d'en-tete : elles prouvent que tu as
+          # edite ce fichier au lieu de le recreer.
+
+          connexions_max_apres_redemarrage = A_COMPLETER
+          role_actif_du_compte_de_service = A_COMPLETER
+          procedures_dans_la_base_restauree = A_COMPLETER
