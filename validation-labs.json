@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-20 10:40:01",
+  "genere_le": "2026-10-20 11:57:26",
   "act": "act version 0.2.84",
   "dsoxlab": "dsoxlab 0.5.5",
   "labs": {
@@ -10,8 +10,9 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 78.8,
+      "duree_s": 103.6,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
       "date": "2026-10-20"
     },
@@ -22,7 +23,7 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 126.8,
+      "duree_s": 126.2,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
@@ -35,7 +36,7 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 111.5,
+      "duree_s": 149.9,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
@@ -48,7 +49,33 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "9/9",
-      "duree_s": 73.6,
+      "duree_s": 100.4,
+      "traces": [],
+      "traces_etrangeres": [],
+      "pourquoi": "",
+      "date": "2026-10-20"
+    },
+    "mysql-05-sauvegarder": {
+      "id": "mysql-05-sauvegarder",
+      "chemin": "mysql-05-sauvegarder",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "10/10",
+      "duree_s": 83.8,
+      "traces": [],
+      "traces_etrangeres": [],
+      "pourquoi": "",
+      "date": "2026-10-20"
+    },
+    "mysql-epreuve-n1": {
+      "id": "mysql-epreuve-n1",
+      "chemin": "mysql-epreuve-n1",
+      "verdict": "VALIDE",
+      "score_avant": 0,
+      "score_apres": 100,
+      "tests": "10/10",
+      "duree_s": 99.5,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
@@ -61,10 +88,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "7/7",
-      "duree_s": 68.0,
+      "duree_s": 98.3,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-02-psql-admin": {
       "id": "pg-02-psql-admin",
@@ -73,11 +101,9 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 136.5,
+      "duree_s": 76.8,
       "traces": [],
-      "traces_etrangeres": [
-        "etranger-preuve-pilote"
-      ],
+      "traces_etrangeres": [],
       "pourquoi": "",
       "date": "2026-10-20"
     },
@@ -88,10 +114,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "9/9",
-      "duree_s": 126.3,
+      "duree_s": 95.6,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-04-securiser": {
       "id": "pg-04-securiser",
@@ -100,10 +127,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "12/12",
-      "duree_s": 100.6,
+      "duree_s": 130.0,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-05-sauvegarder": {
       "id": "pg-05-sauvegarder",
@@ -112,10 +140,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "9/9",
-      "duree_s": 69.7,
+      "duree_s": 96.2,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-06-observer": {
       "id": "pg-06-observer",
@@ -124,10 +153,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "7/7",
-      "duree_s": 75.0,
+      "duree_s": 105.2,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-07-archiver": {
       "id": "pg-07-archiver",
@@ -136,10 +166,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 85.7,
+      "duree_s": 109.1,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-08-restaurer-pitr": {
       "id": "pg-08-restaurer-pitr",
@@ -148,10 +179,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 244.9,
+      "duree_s": 241.5,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     },
     "pg-09-repliquer": {
       "id": "pg-09-repliquer",
@@ -160,10 +192,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "10/10",
-      "duree_s": 273.7,
+      "duree_s": 301.1,
       "traces": [],
+      "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-19"
+      "date": "2026-10-20"
     }
   }
 }
