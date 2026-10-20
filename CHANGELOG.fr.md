@@ -17,7 +17,8 @@ labs, ce qui casse la progression déjà enregistrée des apprenants.
   premiers labs : `pg-01-installer` (l'instance vient du dépôt PGDG, et sa clé
   est contrôlée) et `pg-02-psql-admin` (un script se connecte par le réseau
   sans mot de passe tapé, ce que `.pgpass` n'autorise qu'en 0600, psql
-  l'ignorant en silence autrement).
+  n'honorant pas autrement un fichier que le groupe ou les autres
+  peuvent lire, ce dont il avertit).
 
 - **Sept labs, tous éprouvés dans les deux sens** (0 avant le travail, 100
   après), ce qui porte le catalogue de deux labs à neuf et ouvre les niveaux 2

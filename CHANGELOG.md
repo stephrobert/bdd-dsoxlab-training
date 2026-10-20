@@ -17,7 +17,8 @@ by learners.
   labs: `pg-01-installer` (the instance comes from the PGDG repository, and
   its key is checked) and `pg-02-psql-admin` (a script connects over the
   network without a typed password, which `.pgpass` only allows in 0600,
-  since psql ignores it silently otherwise).
+  since psql does not honour a file
+  readable by group or others, which it warns about).
 
 - **Seven labs, all proven in both directions** (0 before the work, 100 after),
   which brings the catalog from two labs to nine and opens levels 2 and 3:

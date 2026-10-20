@@ -13,15 +13,25 @@ declares.
 
 ## The trap it makes you meet
 
-`~/.pgpass` is **silently ignored** by psql when its permissions are too
-broad. No error, no warning in a script: only a password prompt that hangs. A
-file in the right format but in mode 0644 is useless, and that is the most
-common mistake on this subject.
+**Two different failures produce the same error, and only one warns.**
+Measured on PostgreSQL 18 on 2026-10-20:
+
+- a `.pgpass` readable by **group or others** triggers an explicit libpq
+  warning, "password file … has group or world access", then psql asks for the
+  password again and fails on `fe_sendauth: no password supplied`;
+- a `.pgpass` **in 0600 whose host does not match** the `-h` triggers **no**
+  warning at all, and fails on exactly the same line.
+
+So the final error is identical and the diagnosis is not. And the first case's
+warning goes to standard error: a script that discards it sees only a password
+prompt that hangs, which brings both cases back to the same symptom.
 
 ## What it does not cover
 
 Transport encryption (`pg_stat_ssl`), which belongs to the access lab, and the
-`~/.pg_service.conf` service file, which the guide does not teach.
+`~/.pg_service.conf` service file: the guide does teach it, but this lab does
+not check it. Its three obstacles are already graded, and a fourth would add
+nothing.
 
 ## Duration
 

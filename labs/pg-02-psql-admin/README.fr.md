@@ -13,15 +13,27 @@ que le serveur déclare.
 
 ## Le piège qu'il fait rencontrer
 
-`~/.pgpass` est **ignoré en silence** par psql si ses permissions sont trop
-larges. Pas d'erreur, pas d'avertissement dans un script : seulement une
-demande de mot de passe qui bloque. Un fichier au bon format mais en mode 0644
-ne sert à rien, et c'est la faute la plus fréquente sur ce sujet.
+**Deux pannes différentes rendent la même erreur, et une seule avertit.**
+Mesuré sur PostgreSQL 18 le 2026-10-20 :
+
+- un `.pgpass` dont le **groupe ou les autres** peuvent lire déclenche un
+  avertissement explicite de libpq, « password file … has group or world
+  access », puis psql redemande le mot de passe et échoue sur
+  `fe_sendauth: no password supplied` ;
+- un `.pgpass` **en 0600 dont l'hôte ne correspond pas** au `-h` ne déclenche
+  **aucun** avertissement, et échoue sur exactement la même ligne.
+
+L'erreur finale est donc identique et le diagnostic ne l'est pas. Et
+l'avertissement du premier cas part sur la sortie d'erreur : un script qui la
+jette ne voit qu'une demande de mot de passe qui bloque, ce qui ramène les deux
+cas au même symptôme.
 
 ## Ce qu'il ne couvre pas
 
 Le chiffrement du transport (`pg_stat_ssl`), qui appartient au lab d'accès, et
-le fichier de service `~/.pg_service.conf`, que le guide n'enseigne pas.
+le fichier de service `~/.pg_service.conf` : le guide l'enseigne, mais ce lab
+ne le vérifie pas. Ses trois obstacles sont déjà évalués, et un quatrième
+n'apporterait rien.
 
 ## Durée
 
