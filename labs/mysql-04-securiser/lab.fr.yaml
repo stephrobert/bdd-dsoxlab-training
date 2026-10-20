@@ -1,0 +1,8 @@
+title: "Accorder par rôles, les activer, et refuser une connexion en clair"
+description: |
+  Construire deux rôles de privilèges, en donner un à un compte applicatif,
+  l'ACTIVER, et forcer le TLS sur ce compte. Noté sur le comportement : une
+  connexion non chiffrée doit être refusée, une connexion chiffrée doit
+  aboutir, et le compte doit lire ce qu'il a le droit de lire et rien de plus.
+  Un rôle accordé mais non activé n'accorde rien, et aucune table du catalogue
+  ne le dit.
