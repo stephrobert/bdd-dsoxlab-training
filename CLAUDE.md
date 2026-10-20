@@ -112,7 +112,7 @@ Et pour la remettre : `ansible-vault encrypt --vault-password-file .vault-pass
 
 ---
 
-## Les huit pièges d'écriture, tous rencontrés pour de vrai
+## Les dix pièges d'écriture, tous rencontrés pour de vrai
 
 Ils ont coûté deux soirées, et chacun a été mesuré plutôt que déduit : les
 quatre premiers dans un conteneur PostgreSQL jetable, les trois derniers dans
@@ -290,6 +290,79 @@ Huit labs sur neuf déposent un rapport de trois valeurs dans le répertoire de
 
 Le test exige aussi que l'en-tête **survive** : il disparaît si l'apprenant
 recrée le fichier par une redirection `>` au lieu de l'éditer.
+
+### 9. Un contrôle qui ne peut pas regarder ne conclut jamais au vert
+
+Rencontré **trois fois dans la même heure**, le 2026-10-20, pendant une étape
+de la procédure de version. Chaque fois le même symptôme, et il ne ressemble
+pas à une panne :
+
+    0 vert(s), 0 rouge(s), 15 ignoré(s) sur 15 lab(s)
+    code de sortie : 0
+
+Les trois causes, dans l'ordre où elles sont apparues, chacune cachée par la
+précédente :
+
+1. `verify-solutions.py` sondait l'infrastructure en important `dsoxlab`, et
+   son `except ImportError: return False` transformait une **bibliothèque
+   absente** en **infrastructure absente**. Le message envoyait faire un
+   `dsoxlab provision` déjà fait ;
+2. une fois `dsoxlab` installé, le script allait plus loin et butait sur
+   `dsoxlab reset`, qui **demande une confirmation**. Sans terminal, l'invite
+   échoue, et les quinze labs repartaient en « ignorés ». L'option manquait :
+   `--yes` ;
+3. en voulant prouver la correction, j'ai retiré `dsoxlab` du PATH. `terraform`
+   est parti avec, `read_terraform_outputs` a rendu `None`, et ma sonde a
+   traduit en « infra absente » ce que dsoxlab venait d'écrire mot pour mot :
+   « Nothing can be concluded about what is running ».
+
+**La parade, et elle est structurelle.** Une sonde rend TROIS états et non
+deux, comme le `doctor` de dsoxlab dont `unknown` n'est ni `ok` ni `failed` :
+
+| État | Sens | Geste |
+| --- | --- | --- |
+| mesuré | on sait | lire le verdict |
+| délibérément non mesuré | pas de tests, pas de solution, infra qu'on sait absente | ignorer, c'est un choix |
+| non mesurable | la sonde n'a pas abouti | **dire**, et sortir en non nul |
+
+Et sous `--check`, un lab qui devait être mesuré et ne l'a pas été sort en
+**3**, distinct du **1** d'une solution cassée : le premier se remesure, le
+second se répare.
+
+**Le contrôle se prouve en le faisant échouer.** Le code 3 a été éprouvé en
+retirant `dsoxlab` du PATH, et c'est cet essai qui a trouvé la troisième
+cause. Un garde-fou qu'on n'a pas vu refuser ne garde rien.
+
+### 10. `pkill -f` et `pgrep -f` se désignent eux-mêmes
+
+`dsoxlab reset pg-03-configurer` sortait en 2, donc un apprenant ne pouvait pas
+réinitialiser ce lab. La tâche fautive :
+
+    cmd: pkill -f "temoin-pg-03" || true
+
+`pkill -f` compare le motif à la ligne de commande ENTIÈRE de chaque processus,
+et le `bash -c 'pkill -f "temoin-pg-03" || true'` qui joue la tâche porte le
+motif dans son propre argv. pkill tue donc son parent, le shell meurt avant
+d'évaluer `|| true`, et Ansible rapporte « non-zero return code ».
+
+**La parade est le crochet.** `[t]emoin-pg-03` est une expression régulière qui
+reconnaît le texte `temoin-pg-03`, donc le processus visé, et PAS l'argv du
+shell appelant, qui contient les crochets littéralement. Le motif cesse ainsi
+de se désigner lui-même.
+
+Deux leçons de méthode, et la seconde vaut plus que la première.
+
+**Pourquoi il ne s'était pas vu.** `valider-labs.py` enchaîne ses propres
+étapes, et l'échec du `clean` final n'y est pas fatal. C'est
+`verify-solutions`, qui réinitialise AVANT de mesurer, qui l'a mis au jour, et
+seulement une fois son propre code de sortie corrigé (piège 9). Un défaut peut
+donc attendre derrière un autre : le premier garde-fou réparé révèle ce que le
+second cachait.
+
+**Le piège prend aussi l'auteur.** Le même `pgrep -f` m'a attrapé trois fois le
+même jour dans mes propres scripts de mesure, dont une fois en tuant mon shell.
+Ce n'est pas une faute de contenu, c'est une faute d'outillage, et elle ne
+s'oublie qu'en se relisant.
 
 ---
 

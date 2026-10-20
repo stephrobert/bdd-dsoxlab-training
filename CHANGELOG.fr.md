@@ -60,6 +60,46 @@ labs, ce qui casse la progression déjà enregistrée des apprenants.
 - `RELEASING.md` et `RELEASING.fr.md` ne citent plus une option `--deux-sens`
   que le script n'a jamais acceptée : c'est `--check --negative`.
 
+- **`scripts/verify-solutions.py` concluait au vert sans avoir regardé, trois
+  fois dans la même heure**, chaque fois avec le même symptôme : `0 rouge,
+  15 ignorés, code de sortie 0`. Trouvé en jouant une étape de cette procédure
+  de publication même.
+
+  Les trois causes, chacune cachée par la précédente : un
+  `except ImportError: return False` transformait une BIBLIOTHÈQUE ABSENTE en
+  INFRASTRUCTURE ABSENTE, et le message envoyait faire un `dsoxlab provision`
+  déjà fait ; puis `dsoxlab reset` demandait une confirmation qu'aucun terminal
+  ne pouvait donner, l'option `--yes` manquant ; puis un state Terraform
+  illisible était annoncé comme « infra absente », là où dsoxlab venait
+  d'écrire « Nothing can be concluded about what is running ».
+
+  La sonde rend désormais TROIS états au lieu d'un booléen, comme le `doctor`
+  de dsoxlab avec son `unknown`, et sous `--check` un lab qui devait être
+  mesuré et ne l'a pas été sort en **3**, distinct du **1** d'une solution
+  cassée : le premier se remesure, le second se répare. Le garde-fou a été
+  prouvé en le faisant échouer, et c'est cet essai qui a trouvé la troisième
+  cause.
+
+- `RELEASING.md` et `RELEASING.fr.md` nomment l'interpréteur dont
+  `verify-solutions.py` a besoin, qui doit porter pytest ET dsoxlab, et
+  documentent ses codes de sortie. La procédure citait `python3`, qui sur la
+  machine de référence ne porte ni l'un ni l'autre.
+
+- **`dsoxlab reset pg-03-configurer` échouait, donc un apprenant ne pouvait pas
+  réinitialiser ce lab.** Son cleanup jouait
+  `pkill -f "temoin-pg-03" || true`, et `pkill -f` compare le motif à la ligne
+  de commande ENTIÈRE de chaque processus : le `bash -c` qui exécutait la tâche
+  portait le motif dans son propre argv, donc pkill tuait son parent et le
+  shell mourait avant d'évaluer `|| true`. Le motif est désormais entre
+  crochets, `[t]emoin-pg-03`, qui reconnaît le processus visé et pas le shell
+  appelant.
+
+  Il était resté caché parce que `valider-labs.py` ne traite pas l'échec du
+  `clean` final comme fatal. C'est `verify-solutions`, qui réinitialise AVANT
+  de mesurer, qui l'a mis au jour, et seulement une fois son propre code de
+  sortie corrigé : le premier garde-fou réparé a révélé ce que le second
+  cachait.
+
 ## [0.2.0] - 2026-10-20
 
 ### Ajouté

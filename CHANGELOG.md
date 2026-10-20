@@ -59,6 +59,42 @@ by learners.
 - `RELEASING.md` and `RELEASING.fr.md` no longer quote a `--deux-sens` flag
   that the script never accepted: it is `--check --negative`.
 
+- **`scripts/verify-solutions.py` concluded green without looking, three times
+  in the same hour**, each time with the same symptom: `0 red, 15 ignored, exit
+  code 0`. Found while running a step of this very release procedure.
+
+  The three causes, each hidden by the previous one: an `except ImportError:
+  return False` turned a MISSING LIBRARY into a MISSING INFRASTRUCTURE, and the
+  message sent the reader to a `dsoxlab provision` already done; then
+  `dsoxlab reset` asked for a confirmation that no terminal could give, the
+  `--yes` flag being absent; then an unreadable Terraform state was reported as
+  "no infrastructure", where dsoxlab itself had just written "Nothing can be
+  concluded about what is running".
+
+  The probe now returns THREE states rather than a boolean, as dsoxlab's
+  `doctor` does with `unknown`, and under `--check` a lab that had to be
+  measured and was not exits **3**, distinct from the **1** of a broken
+  solution: the first is re-measured, the second is repaired. The guard was
+  proven by making it fail, and that attempt is what found the third cause.
+
+- `RELEASING.md` and `RELEASING.fr.md` name the interpreter that
+  `verify-solutions.py` needs, which must carry pytest AND dsoxlab, and
+  document its exit codes. The procedure quoted `python3`, which on the
+  reference machine carries neither.
+
+- **`dsoxlab reset pg-03-configurer` failed, so a learner could not reset that
+  lab.** Its cleanup ran `pkill -f "temoin-pg-03" || true`, and `pkill -f`
+  compares the pattern against each process's WHOLE command line: the
+  `bash -c` running the task carried the pattern in its own argv, so pkill
+  killed its parent and the shell died before evaluating `|| true`. The pattern
+  is now bracketed, `[t]emoin-pg-03`, which matches the target process and not
+  the calling shell.
+
+  It had stayed hidden because `valider-labs.py` does not treat a failing final
+  `clean` as fatal. `verify-solutions`, which resets BEFORE measuring, exposed
+  it, and only once its own exit code had been fixed: the first guard repaired
+  revealed what the second was hiding.
+
 ## [0.2.0] - 2026-10-20
 
 ### Added

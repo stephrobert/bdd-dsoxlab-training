@@ -103,6 +103,15 @@ def decouvrir(
     return labs
 
 
+# Les motifs pour lesquels ignorer un lab est un CHOIX et non une panne. Tout
+# autre motif est une mesure qui n'a pas eu lieu, et `--check` doit le dire.
+MOTIFS_DELIBERES = frozenset({
+    "aucun test",
+    "aucune solution",
+    "infra absente",
+    ".vault-pass absent",
+})
+
 # ── pré-conditions ────────────────────────────────────────────────────────────
 
 def _interpreteur_ok() -> bool:
@@ -119,21 +128,45 @@ def _interpreteur_ok() -> bool:
         return False
 
 
-def _infra_disponible() -> bool:
-    """Les VM du meta.yml sont-elles provisionnées et joignables ?"""
+def _etat_infra() -> str:
+    """Trois états, et non deux, parce que la sonde peut ne pas aboutir.
+
+    Rend ``"ok"``, ``"sans-infra"`` ou ``"sans-dsoxlab"``.
+
+    Mesuré le 2026-10-20 : cette sonde rendait ``False`` quand ``dsoxlab``
+    n'était pas importable par l'interpréteur, et l'appelant affichait alors
+    « Infra non provisionnée » sur une infrastructure qui venait de porter les
+    quinze labs. Le script sortait en 0 avec quinze labs ignorés, à une étape
+    dont le seul objet est de mesurer.
+
+    Une bibliothèque absente et une infrastructure absente demandent des
+    gestes opposés : installer l'une, provisionner l'autre. Les confondre
+    envoie chercher au mauvais endroit, et c'est pire que de ne rien dire.
+    """
     try:
         from dsoxlab.discovery.repo import read_repo_metadata
         from dsoxlab.infra.inventory import read_terraform_outputs
+        from dsoxlab.infra.terraform import workdir
     except ImportError:
-        return False
+        return "sans-dsoxlab"
     try:
         meta = read_repo_metadata(REPO)
         if meta is None:
-            return False
-        sorties = read_terraform_outputs(meta)
-        return bool(sorties)
-    except Exception:  # noqa: BLE001 — sonde best-effort : tout echec = pas d infra
-        return False
+            return "sans-infra"
+        if read_terraform_outputs(meta):
+            return "ok"
+        # Pas d'outputs : reste à savoir si rien n'a été provisionné, ou si on
+        # ne peut pas le lire. `read_terraform_outputs` rend None dans les
+        # deux cas, et dsoxlab lui-même écrit alors « Nothing can be concluded
+        # about what is running ». On demande le chemin à `workdir()`, qui est
+        # la source unique côté dsoxlab, plutôt que de le reconstruire ici.
+        try:
+            tfstate = workdir(meta) / "terraform.tfstate"
+        except Exception:  # noqa: BLE001 — provider non résolu, par exemple
+            return "indetermine"
+        return "indetermine" if tfstate.is_file() else "sans-infra"
+    except Exception:  # noqa: BLE001 — la sonde ne doit pas emporter le script
+        return "sans-dsoxlab"
 
 
 # ── exécution ─────────────────────────────────────────────────────────────────
@@ -147,8 +180,12 @@ def reinitialiser(lab: Lab) -> tuple[bool, str]:
     solution » pour une raison qui n'a rien à voir avec leur qualité. C'est
     le faux rouge que ce script produisait avant cette étape.
     """
+    # `--yes` est OBLIGATOIRE ici, et son absence a coûté une passe complète :
+    # `dsoxlab reset` demande « Le travail en cours est perdu. » et attend une
+    # réponse. Sans terminal, l'invite échoue, le reset rend un code non nul,
+    # et les quinze labs partent en « ignorés » avec un script qui sort en 0.
     proc = subprocess.run(
-        ["dsoxlab", "reset", lab.id],
+        ["dsoxlab", "reset", "--yes", lab.id],
         cwd=REPO, capture_output=True, text=True, check=False,
     )
     if proc.returncode == 0:
@@ -243,8 +280,39 @@ def main() -> int:
         return 2
 
     labs = decouvrir(args.lab, args.runtime, args.section)
-    infra = _infra_disponible()
-    if not infra and any(lab.est_vm for lab in labs):
+    etat_infra = _etat_infra()
+    infra = etat_infra == "ok"
+    des_vm = any(lab.est_vm for lab in labs)
+
+    # `sans-dsoxlab` n'est pas `sans-infra` : la sonde n'a pas abouti, donc
+    # on ne sait RIEN de l'infrastructure. Sous `--check`, un appelant
+    # automatisé ne doit pas recevoir un succès pour une mesure qui n'a pas eu
+    # lieu.
+    if etat_infra == "sans-dsoxlab" and des_vm:
+        message = (
+            "La sonde d'infrastructure n'a pas pu aboutir : `dsoxlab` n'est pas\n"
+            f"importable par cet interpréteur ({sys.executable}).\n"
+            "Ce n'est PAS « infra absente » : on ne sait rien de l'infra.\n"
+            "Installe-le dans le même environnement que pytest, par exemple :\n"
+            "    uv pip install --python "
+            f"{sys.executable} dsoxlab"
+        )
+        if args.check:
+            print(message, file=sys.stderr)
+            return 2
+        print(message + "\n\nLes labs vm seront ignorés.\n", file=sys.stderr)
+    elif etat_infra == "indetermine" and des_vm:
+        message = (
+            "Un state Terraform existe, et ses sorties sont illisibles : on ne\n"
+            "sait donc RIEN de ce qui tourne. Ce n'est pas « infra absente ».\n"
+            "La cause habituelle est `terraform` introuvable, ou un cache de\n"
+            "greffons vidé depuis l'apply. `dsoxlab doctor` nomme laquelle."
+        )
+        if args.check:
+            print(message, file=sys.stderr)
+            return 2
+        print(message + "\n\nLes labs vm seront ignorés.\n", file=sys.stderr)
+    elif etat_infra == "sans-infra" and des_vm:
         print("Infra non provisionnée : les labs vm seront ignorés "
               "(dsoxlab provision pour les jouer).\n")
 
@@ -262,7 +330,13 @@ def main() -> int:
             print(f"  ⊘ {lab.id:<34} aucune solution de référence")
             continue
         if lab.est_vm and not infra:
-            verdicts[lab.id] = {"etat": "ignoré", "motif": "infra absente"}
+            # Le motif dit LEQUEL des deux cas, sinon le relevé enregistre
+            # « infra absente » pour une sonde qui n'a pas pu regarder.
+            motif = {
+                "sans-dsoxlab": "sonde d'infra impossible, dsoxlab non importable",
+                "indetermine": "sorties terraform illisibles, infra indéterminée",
+            }.get(etat_infra, "infra absente")
+            verdicts[lab.id] = {"etat": "ignoré", "motif": motif}
             ignores += 1
             continue
         if not VAULT_PASS.is_file():
@@ -340,6 +414,24 @@ def main() -> int:
     print(f"\n{verts} vert(s), {rouges} rouge(s), {ignores} ignoré(s) "
           f"sur {len(labs)} lab(s).")
 
+    # Les labs qu'on a renoncé à mesurer pour une raison qui n'est PAS un
+    # choix. Mesuré le 2026-10-20 : deux défauts de suite ont rendu « 0 rouge,
+    # 15 ignorés, code 0 », et un appelant automatisé y aurait lu un succès.
+    non_mesures = sorted(
+        lab_id
+        for lab_id, entree in verdicts.items()
+        if entree.get("etat") == "ignoré"
+        and entree.get("motif", "") not in MOTIFS_DELIBERES
+    )
+    if non_mesures:
+        print(
+            f"\n{len(non_mesures)} lab(s) n'ont pas pu être mesurés, ce qui n'est "
+            "pas la même chose qu'un succès :",
+            file=sys.stderr,
+        )
+        for lab_id in non_mesures:
+            print(f"  {lab_id} : {verdicts[lab_id].get('motif', '?')}", file=sys.stderr)
+
     if args.lab is None and args.section is None and args.runtime == "all":
         SOLUTIONS.mkdir(exist_ok=True)
         RECORD.write_text(
@@ -356,7 +448,17 @@ def main() -> int:
         )
         print(f"Verdict enregistré dans {RECORD.relative_to(REPO)}")
 
-    return 1 if (args.check and rouges) else 0
+    # Trois issues et non deux, sur le modèle de `doctor --strict` : une
+    # solution cassée se répare (1), une mesure qui n'a pas eu lieu se remesure
+    # (3). Quand les deux coexistent, l'échec l'emporte : une certitude est
+    # plus forte qu'une ignorance.
+    if not args.check:
+        return 0
+    if rouges:
+        return 1
+    if non_mesures:
+        return 3
+    return 0
 
 
 if __name__ == "__main__":

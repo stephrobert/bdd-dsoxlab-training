@@ -10,9 +10,17 @@
   become: true
   tasks:
 
+    # Le crochet n'est pas une coquetterie : `pkill -f` compare le motif à la
+    # ligne de commande ENTIÈRE de chaque processus, et le `bash -c` qui joue
+    # cette tâche porte le motif dans son propre argv. Sans crochet, pkill tue
+    # son parent, le shell meurt avant d'évaluer `|| true`, et `dsoxlab reset`
+    # sort en 2 sur cette tâche. Mesuré le 2026-10-20.
+    #
+    # `[t]emoin-pg-03` reconnaît le texte `temoin-pg-03`, donc le psql visé,
+    # et PAS l'argv du shell, qui contient les crochets littéralement.
     - name: Fermer la session témoin si elle vit encore
       ansible.builtin.shell:
-        cmd: pkill -f "temoin-pg-03" || true
+        cmd: pkill -f "[t]emoin-pg-03" || true
         executable: /bin/bash
       changed_when: false
 
