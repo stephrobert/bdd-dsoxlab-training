@@ -23,7 +23,7 @@ un autre compte, et la connexion est refusée.
 
 ## 2. Créer les objets de l'application
 
-Une base `labdb`, et dedans une table `clients` portant au moins les colonnes
+Une base `appli`, et dedans une table `clients` portant au moins les colonnes
 `id` et `nom`, avec **au moins trois lignes**, en moteur **InnoDB**.
 
 ## 3. Rendre le serveur observable
@@ -46,8 +46,8 @@ ajouter.
 Le fichier `~/rapport-client.txt` porte trois valeurs à compléter :
 
 - `performance_schema_actif` : ce que `@@performance_schema` répond ;
-- `nb_tables_labdb` : le nombre de tables de la base `labdb` ;
-- `moteur_de_la_table_clients` : le moteur de stockage de `labdb.clients`.
+- `nb_tables_appli` : le nombre de tables de la base `appli` ;
+- `moteur_de_la_table_clients` : le moteur de stockage de `appli.clients`.
 
 **Édite le fichier sur place.** Son en-tête doit survivre.
 

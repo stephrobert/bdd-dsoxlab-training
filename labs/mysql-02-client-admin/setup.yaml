@@ -20,7 +20,7 @@
     mdp_root: "R00t!Lab2026"
     admin: labadmin
     mdp_admin: "Adm1n!Lab2026"
-    base: labdb
+    base: appli
     conf_dir: /etc/mysql/mysql.conf.d
   tasks:
 
@@ -153,5 +153,5 @@
           # edite ce fichier au lieu de le recreer.
 
           performance_schema_actif = A_COMPLETER
-          nb_tables_labdb = A_COMPLETER
+          nb_tables_appli = A_COMPLETER
           moteur_de_la_table_clients = A_COMPLETER

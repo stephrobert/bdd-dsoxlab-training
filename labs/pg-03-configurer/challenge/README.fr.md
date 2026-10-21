@@ -38,7 +38,7 @@ lab, même si tous les paramètres sont justes.
 
 ## 4. Remplir le rapport
 
-Le fichier `~/rapport-config.txt` porte trois valeurs à compléter, toutes lues
+Le fichier `~/rapport-configuration.txt` porte trois valeurs à compléter, toutes lues
 sur le serveur :
 
 - `max_connections_effectif` : la valeur avec laquelle il tourne ;

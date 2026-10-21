@@ -115,7 +115,7 @@ Et pour la remettre : `ansible-vault encrypt --vault-password-file .vault-pass
 
 ---
 
-## Les douze pièges d'écriture, tous rencontrés pour de vrai
+## Les treize pièges d'écriture, tous rencontrés pour de vrai
 
 Ils ont coûté deux soirées, et chacun a été mesuré plutôt que déduit : les
 quatre premiers dans un conteneur PostgreSQL jetable, les trois derniers dans
@@ -406,6 +406,36 @@ J'ai lancé `pytest` à la main sur des machines que le pilote venait de
 NETTOYER, j'ai lu `mysql: command not found`, et j'ai conclu que le setup était
 cassé. Il fonctionnait. **Avant de diagnostiquer, vérifier dans quel état se
 trouve la machine qu'on interroge.**
+
+### 13. Deux parcours parallèles doivent nommer les choses pareil
+
+`pg-09-repliquer` enseigne un compte de réplication nommé `replicator`.
+`mysql-07-repliquer` a été écrit avec `repl`. Les deux labs étaient cohérents
+avec eux-mêmes, chacun imposant son nom dans son énoncé, dans sa solution et
+dans son test, et aucun contrôle n'avait rien à dire : `validate-structure` ne
+compare pas deux labs entre eux.
+
+Le défaut n'apparaît que chez l'apprenant qui fait **les deux** parcours, ce
+que le catalogue vend en première ligne de son README. Il apprend alors deux
+noms pour le même concept selon le moteur, et c'est le genre d'écart qu'on met
+sur le compte d'une différence entre PostgreSQL et MySQL alors qu'il n'y en a
+aucune : le nom est un choix d'auteur.
+
+Un pair l'a relevé depuis la page du site, qui enseigne `replicator`. La page
+avait raison, mais ce n'est pas elle qui tranche : **c'est le lab voisin du
+même catalogue.** Renommer `mysql-07` sur `replicator` a aligné les deux
+parcours, et accessoirement la page, sans la toucher.
+
+**La règle : avant de nommer un compte, un rôle, une base ou un fichier de
+rapport dans un lab, chercher comment le lab équivalent de l'autre moteur le
+nomme déjà.** Un `grep -rn` de trente secondes. Le renommage, lui, a coûté une
+réattestation sur deux machines, parce qu'un test qu'on modifie doit être
+rejoué.
+
+Corollaire pour le `setup.yaml` : quand un renommage touche un objet que le
+setup retire pour poser l'état de départ, il doit retirer **l'ancien nom
+aussi**. Sinon l'apprenant qui a joué la version précédente garde un compte
+orphelin que plus aucun test ne regarde.
 
 ---
 

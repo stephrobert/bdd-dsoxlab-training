@@ -116,7 +116,7 @@
 
     - name: Déposer le rapport à remplir
       ansible.builtin.copy:
-        dest: /home/student/rapport-config.txt
+        dest: /home/student/rapport-configuration.txt
         owner: student
         group: student
         mode: "0644"

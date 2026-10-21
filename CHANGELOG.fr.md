@@ -9,9 +9,30 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
-## [0.4.1] - 2026-10-20
+## [0.4.1] - 2026-10-21
 
 ### Corrigé
+
+- Le compte de réplication de `mysql-07-repliquer` est renommé `repl` ->
+  **`replicator`**, le nom que `pg-09-repliquer` enseigne déjà. Les deux labs
+  étaient cohérents chacun avec lui-même, donc aucun contrôle n'avait rien à
+  dire : l'apprenant qui suivait les deux parcours apprenait simplement deux
+  noms pour un même concept. Les énoncés, le scénario, la solution de
+  référence et le test suivent, et `setup.yaml` retire désormais les deux noms
+  pour qu'un apprenant ayant joué la version précédente ne garde pas de compte
+  orphelin. Le lab a été réattesté sur `db1.lab` et `db2.lab`, 0 avant le
+  travail et 100 après.
+
+- Deux autres noms divergeaient, trouvés en appliquant cette même règle à tout
+  le catalogue. `mysql-02-client-admin` nommait sa base `labdb` là où les cinq
+  autres labs MySQL disent `appli`, un intrus **à l'intérieur** du parcours
+  plutôt qu'une différence entre moteurs ; son champ de rapport suit,
+  `nb_tables_labdb` -> `nb_tables_appli`. Et `pg-03-configurer` écrivait
+  `rapport-config.txt` là où `mysql-03-configurer` écrit
+  `rapport-configuration.txt`, alors que tous les autres rapports du catalogue
+  portent le mot entier (`installation`, `observation`, `restauration`,
+  `sauvegarde`). Les deux labs ont été réattestés, 0 avant le travail et 100
+  après.
 
 - `README.md` et `README.fr.md` affirmaient six choses que le catalogue ne fait
   plus. Ils annonçaient **neuf solutions chiffrées** là où les dix-sept le

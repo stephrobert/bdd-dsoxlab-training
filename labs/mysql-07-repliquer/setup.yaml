@@ -215,7 +215,7 @@
 
     - name: Retirer le compte de réplication d'un passage précédent
       ansible.builtin.shell:
-        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop user if exists ''repl''@''%'', ''repl''@''db2.lab'';"'
+        cmd: 'MYSQL_PWD="{{ mdp_admin }}" mysql -u {{ admin }} -e "drop user if exists ''replicator''@''%'', ''replicator''@''db2.lab'', ''repl''@''%'', ''repl''@''db2.lab'';"'
         executable: /bin/bash
       changed_when: true
 

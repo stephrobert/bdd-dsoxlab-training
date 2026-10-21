@@ -9,9 +9,28 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
-## [0.4.1] - 2026-10-20
+## [0.4.1] - 2026-10-21
 
 ### Fixed
+
+- The replication account of `mysql-07-repliquer` is renamed `repl` ->
+  **`replicator`**, the name `pg-09-repliquer` already teaches. The two labs
+  were each self-consistent, so no check had anything to say: a learner taking
+  both tracks simply learned two names for one concept. The statements, the
+  scenario, the reference solution and the test follow, and `setup.yaml` now
+  drops both names so a learner who played the previous version keeps no
+  orphan account. The lab was re-attested on `db1.lab` and `db2.lab`, 0 before
+  the work and 100 after.
+
+- Two more names diverged, found by applying that same rule to the whole
+  catalog. `mysql-02-client-admin` called its database `labdb` where the five
+  other MySQL labs call it `appli`, an outlier **inside** the track rather than
+  a difference between engines; its report field follows, `nb_tables_labdb` ->
+  `nb_tables_appli`. And `pg-03-configurer` wrote `rapport-config.txt` where
+  `mysql-03-configurer` writes `rapport-configuration.txt`, while every other
+  report of the catalog spells the word out (`installation`, `observation`,
+  `restauration`, `sauvegarde`). Both labs were re-attested, 0 before the work
+  and 100 after.
 
 - `README.md` and `README.fr.md` said six things the catalog no longer does.
   They announced **nine encrypted solutions** where all seventeen are, a MySQL

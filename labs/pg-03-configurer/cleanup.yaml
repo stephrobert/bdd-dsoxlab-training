@@ -26,7 +26,7 @@
 
     - name: Retirer le rapport
       ansible.builtin.file:
-        path: /home/student/rapport-config.txt
+        path: /home/student/rapport-configuration.txt
         state: absent
 
     - name: Arrêter et désactiver PostgreSQL

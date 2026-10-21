@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-20 17:38:21",
+  "genere_le": "2026-10-21 06:46:35",
   "act": "act version 0.2.84",
   "dsoxlab": "dsoxlab 0.5.5",
   "labs": {
@@ -23,11 +23,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 117.1,
+      "duree_s": 124.3,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-20"
+      "date": "2026-10-21"
     },
     "mysql-03-configurer": {
       "id": "mysql-03-configurer",
@@ -88,11 +88,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "8/8",
-      "duree_s": 138.9,
+      "duree_s": 141.5,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-20"
+      "date": "2026-10-21"
     },
     "mysql-epreuve-n1": {
       "id": "mysql-epreuve-n1",
@@ -140,11 +140,11 @@
       "score_avant": 0,
       "score_apres": 100,
       "tests": "9/9",
-      "duree_s": 78.3,
+      "duree_s": 136.4,
       "traces": [],
       "traces_etrangeres": [],
       "pourquoi": "",
-      "date": "2026-10-20"
+      "date": "2026-10-21"
     },
     "pg-04-securiser": {
       "id": "pg-04-securiser",
