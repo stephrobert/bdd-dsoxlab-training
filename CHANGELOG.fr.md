@@ -11,6 +11,22 @@ labs, ce qui casse la progression déjà enregistrée des apprenants.
 
 ## [0.4.1] - 2026-10-21
 
+### Ajouté
+
+- `scripts/verifier-release.py` refuse de laisser poser un tag sur un arbre qui
+  ne porte pas cette version. Écrit parce qu'un `v0.4.1` est parti sur l'arbre
+  de la 0.4.0 : la pull request qui portait la 0.4.1 n'était pas encore
+  fusionnée, donc `git switch main && git pull` a réussi sans rien ramener, et
+  `git tag` n'a aucune raison de connaître `pyproject.toml`. Le workflow de
+  release a alors construit un bundle signé et attesté du mauvais contenu. Le
+  script contrôle, dans cet ordre, que l'arbre est propre, que `main` est au
+  niveau de `origin/main`, que **`pyproject.toml` porte exactement la version
+  demandée**, que les deux CHANGELOG portent son entrée, que le tag est libre
+  en local et sur `origin`, et qu'aucun lab de `validation-labs.json` n'est
+  autre chose que VALIDE. Il sort en 1 au premier contrôle en échec et en **2**
+  s'il n'a pas pu mesurer, « je n'ai rien vérifié » n'étant pas « tout va
+  bien ».
+
 ### Corrigé
 
 - Le compte de réplication de `mysql-07-repliquer` est renommé `repl` ->

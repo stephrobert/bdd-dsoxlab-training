@@ -11,6 +11,21 @@ by learners.
 
 ## [0.4.1] - 2026-10-21
 
+### Added
+
+- `scripts/verifier-release.py` refuses to let a tag be posted on a tree that
+  does not carry that version. Written because a `v0.4.1` went out on the
+  0.4.0 tree: the pull request carrying 0.4.1 was not merged yet, so
+  `git switch main && git pull` succeeded without bringing anything back, and
+  `git tag` has no reason to know about `pyproject.toml`. The release workflow
+  then built a signed, attested bundle of the wrong content. The script checks,
+  in order, that the tree is clean, that `main` matches `origin/main`, that
+  **`pyproject.toml` carries exactly the version asked for**, that both
+  CHANGELOG files have its entry, that the tag is free locally and on `origin`,
+  and that no lab in `validation-labs.json` is anything but VALIDE. It exits 1
+  on the first failed check and **2** when it could not measure, because
+  "I checked nothing" is not "all is well".
+
 ### Fixed
 
 - The replication account of `mysql-07-repliquer` is renamed `repl` ->
