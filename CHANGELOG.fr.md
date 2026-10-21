@@ -9,6 +9,30 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.4.1] - 2026-10-20
+
+### Corrigé
+
+- `README.md` et `README.fr.md` affirmaient six choses que le catalogue ne fait
+  plus. Ils annonçaient **neuf solutions chiffrées** là où les dix-sept le
+  sont, un parcours MySQL arrêté au **niveau 1** là où il en porte trois,
+  **un seul** lab à deux machines là où `mysql-07-repliquer` en est un second,
+  et un `lab.yaml` déclarant des `fixtures` et des `services` que ce catalogue
+  ne déclare nulle part. La commande de clonage portait encore le gabarit
+  `<ce dépôt>`.
+
+- Le démarrage en cinq minutes **ne provisionnait rien**, alors que les
+  dix-sept labs sont des labs `vm` et que le provider est déclaré en liste,
+  qui ne se résout pas d'elle-même. Un apprenant qui le suivait à la lettre ne
+  pouvait jouer aucun lab : `run` n'avait aucune machine où ouvrir sa session.
+  Il joue désormais `dsoxlab use --provider kvm` et `dsoxlab provision`
+  d'abord, et rend les machines avec `clean` puis `destroy`.
+
+- Les prérequis portent maintenant la table des machines que les catalogues
+  frères ont, et le contrat déclaratif dit que `meta.yml` porte le bloc
+  `infra:` et que les gabarits Terraform et cloud-init sont packagés dans
+  dsoxlab.
+
 ## [0.4.0] - 2026-10-20
 
 ### Ajouté

@@ -9,6 +9,28 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
+## [0.4.1] - 2026-10-20
+
+### Fixed
+
+- `README.md` and `README.fr.md` said six things the catalog no longer does.
+  They announced **nine encrypted solutions** where all seventeen are, a MySQL
+  track stopping at **level 1** where it now has three, **one** lab using a
+  second machine where `mysql-07-repliquer` is a second one, and a `lab.yaml`
+  declaring `fixtures` and `services` that this catalog never declares. The
+  clone command was still the skeleton's `<this repository>` placeholder.
+
+- The five-minute quickstart **provisioned nothing**, although all seventeen
+  labs are `vm` labs and the provider is declared as a list, which does not
+  resolve on its own. A learner following it to the letter could not play a
+  single lab: `run` had no machine to open a session on. It now runs
+  `dsoxlab use --provider kvm` and `dsoxlab provision` first, and gives the
+  machines back with `clean` and `destroy`.
+
+- The requirements now carry the machine table the sibling catalogs have, and
+  the declarative contract says that `meta.yml` holds the `infra:` block and
+  that the Terraform and cloud-init templates are packaged inside dsoxlab.
+
 ## [0.4.0] - 2026-10-20
 
 ### Added
