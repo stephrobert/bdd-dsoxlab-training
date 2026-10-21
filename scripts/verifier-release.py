@@ -53,6 +53,7 @@ def git(*args: str) -> str:
     try:
         issue = subprocess.run(
             ["git", "-C", str(REPO), *args],
+            check=False,
             capture_output=True,
             text=True,
             timeout=60,

@@ -4,6 +4,13 @@
 # pas sur les fichiers d'un commit. Un lab retiré du `meta.yml` casse le
 # catalogue sans qu'aucun fichier du commit ne le montre.
 
+# `solution/` ne doit être NI lu NI réécrit par un hook. Les dix-sept solutions
+# y sont chiffrées par ansible-vault : c'est du chiffré, pas du source, et
+# `end-of-file-fixer` comme `trailing-whitespace` en corrompraient la charge de
+# façon irréversible. Les catalogues frères posent cette exclusion depuis
+# toujours ; elle manquait ici, et seul le hasard du contenu l'avait évité.
+exclude: '^solution/'
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -63,3 +70,20 @@ repos:
         entry: python3 tests/outils/pas_de_tiret_cadratin.py
         language: system
         pass_filenames: false
+
+      # La CI joue `uvx ruff check .`, et ce hook manquait : une erreur de lint
+      # partait donc en CI au lieu d'être arrêtée au commit. Mesuré le
+      # 2026-10-21, un `subprocess.run` sans `check` explicite (PLW1510) dans
+      # `scripts/verifier-release.py` a fait rougir « Contrat du catalogue »
+      # alors que les neuf hooks locaux étaient verts. Les trois catalogues
+      # frères portent ce hook depuis toujours.
+      #
+      # `--force-exclude` n'est pas une précaution : sans lui, l'exclusion est
+      # IGNORÉE pour tout fichier passé en argument, et pre-commit passe
+      # justement les fichiers en argument.
+      - id: ruff
+        name: ruff (lint du python des labs et des scripts)
+        entry: uvx ruff check --fix --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
