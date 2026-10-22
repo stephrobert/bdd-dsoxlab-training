@@ -9,18 +9,35 @@ Ce que la commande rend, et c'est TROIS issues et non deux :
                     en dire. Ce n'est pas « il va bien », et ce n'est pas non
                     plus « il est faux » : c'est « on ne sait pas ».
 
-Codes de sortie, calques sur ceux de `dsoxlab doctor --strict`, ou 9 et 10 sont
-distincts a dessein : le premier se repare, le second se remesure.
+CE CONTROLE EST UNE CORROBORATION, PAS L'ARBITRE
 
-    0   tous attestes
+Le controle de peremption qui fait foi vit cote site, et il compare deux arbres
+git : `git diff <ancre>..HEAD -- <chemins du lab>`. Les arbres git SONT deja des
+empreintes de contenu, et leur comparaison ne depend pas du chemin parcouru
+pour arriver a HEAD : ni le squash, ni le rebase, ni le cherry-pick n'y
+changent quoi que ce soit. Il n'y a donc rien a inscrire dans les quatorze
+catalogues pour qu'il fonctionne, et c'est ce qui l'a fait preferer a une
+empreinte calculee.
+
+Ce verificateur-ci garde un role etroit : quand un releve PORTE une empreinte,
+il dit si le contenu a bouge depuis. Il ne la reclame pas. Un verdict sans
+empreinte n'est pas un defaut, c'est une corroboration qu'on n'a pas, et crier
+sur les dix-sept labs d'un catalogue apprendrait surtout a ignorer la sortie.
+
+Le cas que NI l'un NI l'autre ne peut rattraper apres coup, c'est une pull
+request squashee qui retouche un test APRES sa campagne : le commit unique
+porte les deux, et le squash a detruit l'information. Celui-la ne se mesure
+pas, il s'empeche, et c'est le role du hook `verdicts-et-commun-separes`.
+
+Codes de sortie :
+
+    0   rien de perime (des empreintes peuvent manquer, c'est dit et c'est tout)
     1   au moins un PERIME          -> rejouer ces labs
-    10  au moins un NON MESURABLE   -> rejouer pour inscrire l'empreinte
-
-Quand les deux coexistent, 1 l'emporte : une certitude est plus forte qu'une
-ignorance.
+    10  avec --strict seulement : au moins un verdict sans empreinte
 
 Usage :
     python3 scripts/verifier-attestations.py
+    python3 scripts/verifier-attestations.py --strict
     python3 scripts/verifier-attestations.py --json
 """
 
@@ -85,6 +102,11 @@ def etat_des_labs() -> dict[str, dict[str, str]]:
 def main() -> int:
     analyseur = argparse.ArgumentParser(description=__doc__)
     analyseur.add_argument("--json", action="store_true", help="sortie machine")
+    analyseur.add_argument(
+        "--strict",
+        action="store_true",
+        help="sortir en 10 si un verdict ne porte pas d'empreinte",
+    )
     options = analyseur.parse_args()
 
     etats = etat_des_labs()
@@ -107,13 +129,14 @@ def main() -> int:
         if not options.json:
             print(f"\nA REJOUER, leur contenu a change : {', '.join(perimes)}", file=sys.stderr)
         return RC_UN_PERIME
-    if inconnus:
-        if not options.json:
-            print(
-                f"\nSANS EMPREINTE, donc rien a conclure : {', '.join(inconnus)}\n"
-                "Les rejouer inscrira leur empreinte.",
-                file=sys.stderr,
-            )
+    if inconnus and not options.json:
+        print(
+            f"\n{len(inconnus)} verdict(s) sans empreinte. Ce n'est pas un defaut : "
+            "l'empreinte\ns'inscrit a la prochaine campagne, et la peremption qui fait "
+            "foi se mesure\ncote site en comparant deux arbres git, sans rien demander "
+            "au catalogue."
+        )
+    if inconnus and options.strict:
         return RC_UN_NON_MESURABLE
     return RC_TOUT_ATTESTE
 

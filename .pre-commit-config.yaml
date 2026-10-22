@@ -71,6 +71,23 @@ repos:
         language: system
         pass_filenames: false
 
+      # Un verdict ne se commite pas avec ce qu'il mesure. Le 2026-10-22, trois
+      # labs de ce dépôt sont ressortis « à réattester » après la fusion de la
+      # PR #6 : le squash avait réuni la correction des tests et les verdicts
+      # dans un commit unique, daté de la fusion.
+      #
+      # Ce cas-là se rattrape encore, puisque les deux étaient cohérents. Celui
+      # qui ne se rattrape JAMAIS, c'est une PR squashée qui retouche un test
+      # APRÈS sa campagne : le commit unique porte les deux et l'information
+      # qui les distinguait est détruite. Aucune mesure a posteriori ne peut
+      # le voir, ni une date, ni un diff entre deux arbres. Il ne reste qu'à
+      # l'empêcher, et c'est ce que fait ce hook.
+      - id: verdicts-et-commun-separes
+        name: les verdicts ne sont pas commités avec ce qu'ils mesurent
+        entry: python3 tests/outils/verdicts_et_commun_separes.py
+        language: system
+        pass_filenames: false
+
       # La CI joue `uvx ruff check .`, et ce hook manquait : une erreur de lint
       # partait donc en CI au lieu d'être arrêtée au commit. Mesuré le
       # 2026-10-21, un `subprocess.run` sans `check` explicite (PLW1510) dans
