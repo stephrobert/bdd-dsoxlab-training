@@ -9,6 +9,41 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.4.2] - 2026-10-22
+
+### Ajouté
+
+- Un verdict ne peut plus être commité avec ce qu'il mesure. Le hook
+  `verdicts-et-commun-separes` refuse un commit portant `validation-labs.json`
+  à côté de ce que le cycle joue : `challenge/tests/`, `setup.yaml`,
+  `cleanup.yaml`, `lab.yaml` d'un lab, et l'outillage partagé.
+
+  Cela ferme un cas **qu'aucune mesure ne rattrape après coup**. Quand une pull
+  request squashée retouche un test *après* sa campagne, le commit unique porte
+  les deux et le squash a détruit ce qui les distinguait : ni une date, ni un
+  diff entre deux arbres, ni une empreinte inscrite ensuite ne peuvent dire
+  lequel est venu avant. Il ne se constate pas, il s'empêche.
+
+  L'énoncé reste autorisé à côté d'un relevé : il n'est pas joué par le cycle,
+  et l'interdire obligerait à une campagne pour une coquille.
+
+- `scripts/empreinte_lab.py` et `scripts/verifier-attestations.py`, une
+  corroboration locale : un sha256 de ce que le cycle joue, inscrit à côté de
+  chaque verdict par les campagnes à venir. Elle n'est **pas exigée** : un
+  verdict qui n'en porte pas n'est pas un défaut, le contrôle le dit et sort en
+  0. `--strict` rétablit le code 10 pour un appelant automatisé.
+
+### Corrigé
+
+- La péremption d'un verdict ne se juge plus en comparant des **dates**, ce qui
+  répond à une autre question que celle qu'on pose. Elle s'est trompée dans les
+  deux sens le 2026-10-22 : une correction commitée avec les verdicts qu'elle
+  périmait est passée pour saine, et des labs réattestés sur une branche sont
+  ressortis « à réattester » après leur fusion en squash, contenu inchangé.
+
+  Les arbres git sont déjà des empreintes de contenu : le contrôle qui fait foi
+  compare donc deux arbres, et ne dépend plus de la façon dont on a fusionné.
+
 ## [0.4.1] - 2026-10-21
 
 ### Ajouté

@@ -9,6 +9,42 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
+## [0.4.2] - 2026-10-22
+
+### Added
+
+- A verdict can no longer be committed together with what it measures. The
+  `verdicts-et-commun-separes` hook refuses a commit carrying
+  `validation-labs.json` alongside anything the cycle plays:
+  `challenge/tests/`, `setup.yaml`, `cleanup.yaml`, `lab.yaml` of any lab, plus
+  the shared tooling.
+
+  This closes a case **no measurement can catch afterwards**. When a squashed
+  pull request touches a test *after* its campaign, the single commit carries
+  both and the squash has destroyed what told them apart: neither a date, nor a
+  diff between two trees, nor a fingerprint recorded later can say which came
+  first. It cannot be observed, so it is prevented.
+
+  The statement stays allowed next to a verdict: it is not played by the cycle,
+  and forbidding it would demand a campaign for a typo.
+
+- `scripts/empreinte_lab.py` and `scripts/verifier-attestations.py`, a local
+  corroboration: a sha256 of what the cycle plays, recorded beside each verdict
+  by future campaigns. It is **not required**: a verdict without one is not a
+  defect, and the check says so and exits 0. `--strict` restores exit code 10
+  for an automated caller.
+
+### Fixed
+
+- The staleness of a verdict is no longer judged by comparing **dates**, which
+  answers a different question from the one being asked. It was wrong in both
+  directions on 2026-10-22: a correction committed together with the verdicts
+  it invalidated passed as healthy, and labs re-attested on a branch came back
+  "to be re-attested" after their squash merge, their content unchanged.
+
+  Git trees already are content fingerprints, so the authoritative check now
+  compares two trees and no longer depends on how a branch was merged.
+
 ## [0.4.1] - 2026-10-21
 
 ### Added
