@@ -34,10 +34,13 @@ traverse pas l'un pour atteindre l'autre :
 | Parcours | Ce qu'il couvre |
 |---|---|
 | PostgreSQL, niveaux 1 à 3 | installer, piloter, configurer, sécuriser, sauvegarder, observer, archiver, restaurer au point dans le temps, répliquer |
-| MySQL, niveau 1 | installer, piloter le client et MySQL Shell, configurer avec persistance, accorder par rôles avec TLS, sauvegarder en logique, puis une **épreuve notée** qui mesure les cinq ensemble |
+| MySQL, niveaux 1 à 3 | installer, piloter le client et MySQL Shell, configurer avec persistance, accorder par rôles avec TLS, sauvegarder en logique, puis une **épreuve notée** ; observer une requête lente et récupérer ce qu'une purge n'a pas rendu ; répliquer avec GTID |
 
-L'épreuve `mysql-epreuve-n1` est le premier lab ÉVALUÉ du catalogue : dix
-tâches, 100 points, 70 pour réussir, et `dsoxlab submit` rend un verdict.
+**Deux labs sont ÉVALUÉS** (`lab_type: challenge`), et sur ceux-là
+`dsoxlab submit` rend un verdict plutôt qu'un score brut :
+`pg-08-restaurer-pitr`, huit tâches et 80 points pour réussir, et
+`mysql-epreuve-n1`, dix tâches et 70 pour réussir, qui mesure tout le niveau 1
+de MySQL d'un coup.
 
 **L'ordre compte, et ce n'est pas celui des sujets.** Il suit ce dont une
 machine a besoin pour que l'étape suivante soit seulement possible : une
@@ -66,12 +69,27 @@ le dépôt Oracle, ce qui est justement le sujet du premier lab de chaque
 parcours.
 
 **Les dix-sept labs sont des labs `vm`**, donc `dsoxlab provision` est toujours
-nécessaire. Le catalogue déclare trois machines Debian 13 (`db1.lab`,
-`db2.lab`, `db3.lab`) sur le réseau `lab-bdd`, chacune avec 2 Go de RAM,
-2 vCPU et 20 Go de disque : environ 6 Go de RAM et 60 Go de disque en tout.
+nécessaire.
 
-Seul `pg-09-repliquer` emploie une seconde machine. `db3.lab` est
-provisionnée mais aucun lab ne s'en sert encore.
+### Les machines, et les labs qui en demandent deux
+
+Trois machines, déclarées dans [`meta.yml`](./meta.yml) sur le réseau
+`lab-bdd` (`10.10.100.0/24`) et provisionnées d'un seul coup :
+
+| Hôte | Distribution | vCPU | RAM | Disque |
+|---|---|---|---|---|
+| `db1.lab` | Debian 13 | 2 | 2 Go | 20 Go |
+| `db2.lab` | Debian 13 | 2 | 2 Go | 20 Go |
+| `db3.lab` | Debian 13 | 2 | 2 Go | 20 Go |
+
+Environ 6 Go de RAM et 60 Go de disque en tout. Quinze labs tiennent sur
+`db1.lab` seule ; deux en demandent une seconde, `pg-09-repliquer` et
+`mysql-07-repliquer`, qui déclarent `db2.lab` sous un rôle `replica`.
+`db3.lab` est provisionnée mais aucun lab ne s'en sert encore.
+
+Le provider est déclaré en **liste** (`kvm`, `incus`), et **une liste ne se
+résout pas d'elle-même** : en choisir un avec `dsoxlab use --provider kvm`.
+Sans ça, les commandes d'infra refusent de partir plutôt que de deviner.
 
 `dsoxlab doctor` dit ce dont ce dépôt a besoin et ce dont il n'a pas besoin, et
 distingue un contrôle qui a échoué d'un contrôle qu'il n'a pas pu mesurer.
@@ -86,25 +104,36 @@ Installe-le en outil autonome, pour qu'il reste hors de ce dépôt :
 uv tool install dsoxlab
 
 # 2. Ce catalogue de labs
-git clone <ce dépôt>
+git clone https://github.com/stephrobert/bdd-dsoxlab-training.git
 cd bdd-dsoxlab-training
 
-# 3. Vérifier que le contrat est valide
+# 3. Vérifier le contrat et les machines
 dsoxlab validate-structure
+dsoxlab doctor
 ```
 
 ### Votre premier lab, en cinq minutes
 
+Les machines doivent exister d'abord : rien ici ne tourne sur ton poste.
+
 ```bash
 export LAB_HOME=$PWD
-dsoxlab list-labs                # le catalogue, dans l'ordre pédagogique
-dsoxlab run       <id>           # poser l'état de départ
-dsoxlab challenge <id>           # lire la mission
-dsoxlab check     <id>           # lancer les tests, enregistrer le score
+dsoxlab use --provider kvm             # une liste de providers ne se résout pas seule
+dsoxlab provision                      # crée db1.lab, db2.lab et db3.lab, une fois
+
+dsoxlab list-labs                      # les dix-sept labs, dans l'ordre pédagogique
+dsoxlab run       pg-01-installer      # pose l'état de départ et ouvre la session
+dsoxlab challenge pg-01-installer      # lire la mission, sans pas-à-pas
+dsoxlab check     pg-01-installer      # joue les tests, enregistre le score
+
+dsoxlab clean     pg-01-installer      # défait le lab, garde les machines
+dsoxlab destroy                        # rend les machines
 ```
 
 C'est `run` qui prépare le lab. Un `check` joué sur un lab jamais démarré ne
-mesure rien, et le dit au lieu d'enregistrer un 0.
+mesure rien, et le dit au lieu d'enregistrer un 0. `provision` sort en code
+non nul si un hôte ne répond pas, et nomme les domaines orphelins qu'il a
+laissés plutôt que d'annoncer un succès.
 
 ### Garder à jour
 
@@ -124,12 +153,18 @@ mettre l'outil à jour, tant que la version du contrat correspond.
 Le catalogue est décrit par des données, pas par du code, et c'est ce qui garde
 le moteur `dsoxlab` indépendant du domaine :
 
-- **`meta.yml`** à la racine déclare l'identité du dépôt et l'**ordre** des
-  sections affichées par `list-labs` ;
+- **`meta.yml`** à la racine déclare l'identité du dépôt, l'**infrastructure**
+  (provider, réseau `lab-bdd`, `10.10.100.0/24` et les trois hôtes
+  `db*.lab`) et l'**ordre** des sections affichées par `list-labs` ;
 - **`lab.yaml`** par lab déclare ses `skills`, son `level`, son `runtime`
-  (type, fixtures, services), ses `distros`, son `doc_url` et un bloc
-  `validation`. Un `lab.fr.yaml` surcharge `title` et `description` en
-  français, et rien d'autre.
+  (type et targets), ses `distros`, son `doc_url` et un bloc `validation`. Un
+  `lab.fr.yaml` surcharge `title` et `description` en français, et rien
+  d'autre ;
+- **`setup.yaml`** et **`cleanup.yaml`** posent et défont l'état des machines ;
+- **`challenge/tests/test_functional.py`** porte la preuve.
+
+Les gabarits Terraform et cloud-init sont **packagés dans dsoxlab**, pas ici :
+ce dépôt ne déclare que son bloc `infra:` et sa clé publique dans `ssh/`.
 
 `dsoxlab validate-structure` contrôle tout le contrat : `meta.yml` bien formé,
 chaque lab référencé présent avec un `lab.yaml` valide, chaque fichier de test
@@ -169,7 +204,7 @@ le travail et passer après. Un test vert avant le travail n'est pas un test,
 c'est une hypothèse sur le setup.
 
 Les solutions de référence vivent dans `solution/<lab>/solution.yaml`, et
-les **neuf sont chiffrées** par `ansible-vault`. Une solution livrée en
+les **dix-sept sont chiffrées** par `ansible-vault`. Une solution livrée en
 clair gâche le lab, et git la garde pour toujours.
 
 `scripts/verify-solutions.py` les déchiffre, les joue sur une machine

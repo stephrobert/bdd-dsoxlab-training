@@ -23,7 +23,7 @@ different account, and the connection is refused.
 
 ## 2. Create the application's objects
 
-A `labdb` database, and in it a `clients` table carrying at least the `id` and
+A `appli` database, and in it a `clients` table carrying at least the `id` and
 `nom` columns, with **at least three rows**, on the **InnoDB** engine.
 
 ## 3. Make the server observable
@@ -46,8 +46,8 @@ repository to add.
 The `~/rapport-client.txt` file holds three values to complete:
 
 - `performance_schema_actif`: what `@@performance_schema` answers;
-- `nb_tables_labdb`: the number of tables in the `labdb` database;
-- `moteur_de_la_table_clients`: the storage engine of `labdb.clients`.
+- `nb_tables_appli`: the number of tables in the `appli` database;
+- `moteur_de_la_table_clients`: the storage engine of `appli.clients`.
 
 **Edit the file in place.** Its header must survive.
 

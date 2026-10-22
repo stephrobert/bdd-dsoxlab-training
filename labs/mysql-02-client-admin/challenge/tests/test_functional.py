@@ -45,7 +45,7 @@ SENTINELLE = "# Rapport de prise en main du client MySQL."
 ADMIN = "labadmin"
 MDP_ADMIN = "Adm1n!Lab2026"
 PROFIL = "lab"
-BASE = "labdb"
+BASE = "appli"
 TABLE = "clients"
 LIGNES_MINIMUM = 3
 MOTEUR = "InnoDB"
@@ -368,14 +368,14 @@ def test_le_rapport_compte_les_tables_et_nomme_le_moteur(db1) -> None:
         "select count(*) from information_schema.tables "
         f"where table_schema = '{BASE}'",
     )
-    ecrit_tables = _valeur(db1, "nb_tables_labdb")
+    ecrit_tables = _valeur(db1, "nb_tables_appli")
     assert ecrit_tables == attendu_tables, message(
         en=(
-            f"nb_tables_labdb = {ecrit_tables!r} in the report, but the catalog counts "
+            f"nb_tables_appli = {ecrit_tables!r} in the report, but the catalog counts "
             f"{attendu_tables!r}. `information_schema.tables` answers it."
         ),
         fr=(
-            f"nb_tables_labdb = {ecrit_tables!r} dans le rapport, alors que le "
+            f"nb_tables_appli = {ecrit_tables!r} dans le rapport, alors que le "
             f"catalogue en compte {attendu_tables!r}. `information_schema.tables` le "
             "donne."
         ),

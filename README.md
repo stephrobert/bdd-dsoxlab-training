@@ -33,10 +33,12 @@ one to reach the other:
 | Track | What it covers |
 |---|---|
 | PostgreSQL, levels 1 to 3 | install, administer, configure, secure, back up, observe, archive, restore point-in-time, replicate |
-| MySQL, level 1 | install, drive the client and MySQL Shell, configure with persistence, grant through roles with TLS, back up logically, then a **graded exam** measuring the five together |
+| MySQL, levels 1 to 3 | install, drive the client and MySQL Shell, configure with persistence, grant through roles with TLS, back up logically, then a **graded exam**; observe a slow query and reclaim what a purge did not return; replicate with GTID |
 
-The `mysql-epreuve-n1` exam is the catalog's first GRADED lab: ten tasks,
-100 points, 70 to pass, and `dsoxlab submit` returns a verdict.
+**Two labs are GRADED** (`lab_type: challenge`), and on those `dsoxlab submit`
+returns a verdict rather than a bare score: `pg-08-restaurer-pitr`, eight tasks
+and 80 points to pass, and `mysql-epreuve-n1`, ten tasks and 70 to pass, which
+measures the whole of MySQL level 1 at once.
 
 **The order matters, and it is not the order of the topics.** It follows
 what a machine needs before the next step is even possible: an instance
@@ -65,12 +67,26 @@ from the Oracle repository, which is itself the subject of each track's
 first lab.
 
 **All seventeen labs are `vm` labs**, so `dsoxlab provision` is always needed.
-The catalog declares three Debian 13 machines (`db1.lab`, `db2.lab`,
-`db3.lab`) on the `lab-bdd` network, each with 2 GB of RAM, 2 vCPU and
-20 GB of disk: about 6 GB of RAM and 60 GB of disk in all.
 
-Only `pg-09-repliquer` uses a second machine. `db3.lab` is provisioned but
+### The machines, and which labs need two
+
+Three machines, declared in [`meta.yml`](./meta.yml) on the `lab-bdd` network
+(`10.10.100.0/24`) and provisioned in one go:
+
+| Host | Distribution | vCPU | RAM | Disk |
+|---|---|---|---|---|
+| `db1.lab` | Debian 13 | 2 | 2 GB | 20 GB |
+| `db2.lab` | Debian 13 | 2 | 2 GB | 20 GB |
+| `db3.lab` | Debian 13 | 2 | 2 GB | 20 GB |
+
+About 6 GB of RAM and 60 GB of disk in all. Fifteen labs run on `db1.lab`
+alone; two need a second machine, `pg-09-repliquer` and `mysql-07-repliquer`,
+which declare `db2.lab` under a `replica` role. `db3.lab` is provisioned but
 no lab uses it yet.
+
+The provider is declared as a **list** (`kvm`, `incus`), and **a list does not
+resolve on its own**: pick one with `dsoxlab use --provider kvm`. Without it,
+the infra commands refuse to run rather than guessing.
 
 `dsoxlab doctor` says what this repository needs and what it does not, and
 tells apart a check that failed from one it could not measure.
@@ -85,25 +101,36 @@ as a standalone tool, so it stays out of this repository:
 uv tool install dsoxlab
 
 # 2. This lab catalog
-git clone <this repository>
+git clone https://github.com/stephrobert/bdd-dsoxlab-training.git
 cd bdd-dsoxlab-training
 
-# 3. Check the contract is valid
+# 3. Check the contract and the machines
 dsoxlab validate-structure
+dsoxlab doctor
 ```
 
 ### Your first lab, in five minutes
 
+The machines have to exist first: nothing here runs on your own host.
+
 ```bash
 export LAB_HOME=$PWD
-dsoxlab list-labs                # the catalog, in teaching order
-dsoxlab run       <id>           # set the starting state
-dsoxlab challenge <id>           # read the mission
-dsoxlab check     <id>           # run the tests, record the score
+dsoxlab use --provider kvm             # a list of providers does not resolve on its own
+dsoxlab provision                      # creates db1.lab, db2.lab and db3.lab, once
+
+dsoxlab list-labs                      # the seventeen labs, in teaching order
+dsoxlab run       pg-01-installer      # sets the starting state and opens the session
+dsoxlab challenge pg-01-installer      # read the mission, no step-by-step
+dsoxlab check     pg-01-installer      # run the tests, record the score
+
+dsoxlab clean     pg-01-installer      # undoes the lab, keeps the machines
+dsoxlab destroy                        # gives the machines back
 ```
 
 `run` is what prepares the lab. Running `check` on a lab you never started
-measures nothing, and says so rather than recording a 0.
+measures nothing, and says so rather than recording a 0. `provision` exits
+non-zero if a host does not answer, and names the orphan domains it left
+behind rather than claiming success.
 
 ### Keeping it up to date
 
@@ -123,11 +150,19 @@ the contract version matches.
 The catalog is described by data, not code, which is what keeps the `dsoxlab`
 engine domain-agnostic:
 
-- **`meta.yml`** at the root declares the repository identity and the **order**
-  of the sections shown by `list-labs`;
-- **`lab.yaml`** per lab declares its `skills`, `level`, `runtime` (type,
-  fixtures, services), `distros`, `doc_url` and a `validation` block. A
-  `lab.fr.yaml` overrides `title` and `description` in French, and nothing else.
+- **`meta.yml`** at the root declares the repository identity, the
+  **infrastructure** (provider, network `lab-bdd`, `10.10.100.0/24` and the
+  three `db*.lab` hosts) and the **order** of the sections shown by
+  `list-labs`;
+- **`lab.yaml`** per lab declares its `skills`, `level`, `runtime` (type and
+  targets), `distros`, `doc_url` and a `validation` block. A `lab.fr.yaml`
+  overrides `title` and `description` in French, and nothing else;
+- **`setup.yaml`** and **`cleanup.yaml`** lay down and undo the machine state;
+- **`challenge/tests/test_functional.py`** carries the proof.
+
+The Terraform and cloud-init templates are **packaged inside dsoxlab**, not
+here: this repository declares only its `infra:` block and its public key in
+`ssh/`.
 
 `dsoxlab validate-structure` checks the whole contract: `meta.yml` is well
 formed, every referenced lab exists with a valid `lab.yaml`, every declared
@@ -165,8 +200,8 @@ And a lab is proven **in both directions**: the tests must fail before the work
 and pass after it. A test that is green before the work is not a test, it is an
 assumption about the setup.
 
-The reference solutions live in `solution/<lab>/solution.yaml`, and the
-**nine of them are encrypted** with `ansible-vault`. A solution shipped in
+The reference solutions live in `solution/<lab>/solution.yaml`, and
+**all seventeen are encrypted** with `ansible-vault`. A solution shipped in
 clear text spoils the lab, and git keeps it forever.
 
 `scripts/verify-solutions.py` decrypts them, plays them on a fresh machine

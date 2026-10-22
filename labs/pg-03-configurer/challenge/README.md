@@ -35,7 +35,7 @@ even if every parameter is right.
 
 ## 4. Fill in the report
 
-The `~/rapport-config.txt` file holds three values to complete, all read from
+The `~/rapport-configuration.txt` file holds three values to complete, all read from
 the server:
 
 - `max_connections_effectif`: the value it runs with;

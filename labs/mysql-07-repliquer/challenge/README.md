@@ -21,7 +21,7 @@ stepped up simultaneously on all servers. Read the message, it says everything.
 
 ## 2. Create the replication account, and only what it needs
 
-A `repl` account with password `R3pl!Lab2026`, reachable from the replica,
+A `replicator` account with password `R3pl!Lab2026`, reachable from the replica,
 holding `REPLICATION SLAVE` and **nothing more**. A global `SELECT` would give
 it the `mysql` database and its password hashes.
 

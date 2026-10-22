@@ -69,7 +69,7 @@ ADMIN = "labadmin"
 MDP_ADMIN = "Adm1n!Lab2026"
 BASE = "appli"
 TABLE = "clients"
-COMPTE_REPL = "repl"
+COMPTE_REPL = "replicator"
 
 # Mesuré entre 48 et 67 ms sur deux conteneurs. Trente secondes laissent de la
 # marge à une VM chargée, et ne sauvent pas une réplication arrêtée.

@@ -39,6 +39,6 @@ pas une réplication sur un nom qu'on n'a pas vérifié.
 
 Les identifiants : le compte d'administration `labadmin` sur les **deux**
 serveurs, mot de passe `Adm1n!Lab2026`. Le compte de réplication à créer
-s'appellera `repl`, avec le mot de passe `R3pl!Lab2026`.
+s'appellera `replicator`, avec le mot de passe `R3pl!Lab2026`.
 
 Le guide : [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/replication/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/replication/)

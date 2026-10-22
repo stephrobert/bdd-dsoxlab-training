@@ -9,6 +9,67 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [0.4.1] - 2026-10-21
+
+### Ajouté
+
+- `scripts/verifier-release.py` refuse de laisser poser un tag sur un arbre qui
+  ne porte pas cette version. Écrit parce qu'un `v0.4.1` est parti sur l'arbre
+  de la 0.4.0 : la pull request qui portait la 0.4.1 n'était pas encore
+  fusionnée, donc `git switch main && git pull` a réussi sans rien ramener, et
+  `git tag` n'a aucune raison de connaître `pyproject.toml`. Le workflow de
+  release a alors construit un bundle signé et attesté du mauvais contenu. Le
+  script contrôle, dans cet ordre, que l'arbre est propre, que `main` est au
+  niveau de `origin/main`, que **`pyproject.toml` porte exactement la version
+  demandée**, que les deux CHANGELOG portent son entrée, que le tag est libre
+  en local et sur `origin`, et qu'aucun lab de `validation-labs.json` n'est
+  autre chose que VALIDE. Il sort en 1 au premier contrôle en échec et en **2**
+  s'il n'a pas pu mesurer, « je n'ai rien vérifié » n'étant pas « tout va
+  bien ».
+
+### Corrigé
+
+- Le compte de réplication de `mysql-07-repliquer` est renommé `repl` ->
+  **`replicator`**, le nom que `pg-09-repliquer` enseigne déjà. Les deux labs
+  étaient cohérents chacun avec lui-même, donc aucun contrôle n'avait rien à
+  dire : l'apprenant qui suivait les deux parcours apprenait simplement deux
+  noms pour un même concept. Les énoncés, le scénario, la solution de
+  référence et le test suivent, et `setup.yaml` retire désormais les deux noms
+  pour qu'un apprenant ayant joué la version précédente ne garde pas de compte
+  orphelin. Le lab a été réattesté sur `db1.lab` et `db2.lab`, 0 avant le
+  travail et 100 après.
+
+- Deux autres noms divergeaient, trouvés en appliquant cette même règle à tout
+  le catalogue. `mysql-02-client-admin` nommait sa base `labdb` là où les cinq
+  autres labs MySQL disent `appli`, un intrus **à l'intérieur** du parcours
+  plutôt qu'une différence entre moteurs ; son champ de rapport suit,
+  `nb_tables_labdb` -> `nb_tables_appli`. Et `pg-03-configurer` écrivait
+  `rapport-config.txt` là où `mysql-03-configurer` écrit
+  `rapport-configuration.txt`, alors que tous les autres rapports du catalogue
+  portent le mot entier (`installation`, `observation`, `restauration`,
+  `sauvegarde`). Les deux labs ont été réattestés, 0 avant le travail et 100
+  après.
+
+- `README.md` et `README.fr.md` affirmaient six choses que le catalogue ne fait
+  plus. Ils annonçaient **neuf solutions chiffrées** là où les dix-sept le
+  sont, un parcours MySQL arrêté au **niveau 1** là où il en porte trois,
+  **un seul** lab à deux machines là où `mysql-07-repliquer` en est un second,
+  et un `lab.yaml` déclarant des `fixtures` et des `services` que ce catalogue
+  ne déclare nulle part. La commande de clonage portait encore le gabarit
+  `<ce dépôt>`.
+
+- Le démarrage en cinq minutes **ne provisionnait rien**, alors que les
+  dix-sept labs sont des labs `vm` et que le provider est déclaré en liste,
+  qui ne se résout pas d'elle-même. Un apprenant qui le suivait à la lettre ne
+  pouvait jouer aucun lab : `run` n'avait aucune machine où ouvrir sa session.
+  Il joue désormais `dsoxlab use --provider kvm` et `dsoxlab provision`
+  d'abord, et rend les machines avec `clean` puis `destroy`.
+
+- Les prérequis portent maintenant la table des machines que les catalogues
+  frères ont, et le contrat déclaratif dit que `meta.yml` porte le bloc
+  `infra:` et que les gabarits Terraform et cloud-init sont packagés dans
+  dsoxlab.
+
 ## [0.4.0] - 2026-10-20
 
 ### Ajouté

@@ -21,7 +21,7 @@ monter simultanément sur tous les serveurs. Lis le message, il dit tout.
 
 ## 2. Créer le compte de réplication, et lui seulement ce qu'il faut
 
-Un compte `repl` avec le mot de passe `R3pl!Lab2026`, joignable depuis le
+Un compte `replicator` avec le mot de passe `R3pl!Lab2026`, joignable depuis le
 réplica, qui détient `REPLICATION SLAVE` et **rien de plus**. Un `SELECT`
 global lui donnerait la base `mysql` et ses empreintes de mots de passe.
 

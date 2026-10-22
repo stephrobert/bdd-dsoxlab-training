@@ -9,6 +9,62 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
+## [0.4.1] - 2026-10-21
+
+### Added
+
+- `scripts/verifier-release.py` refuses to let a tag be posted on a tree that
+  does not carry that version. Written because a `v0.4.1` went out on the
+  0.4.0 tree: the pull request carrying 0.4.1 was not merged yet, so
+  `git switch main && git pull` succeeded without bringing anything back, and
+  `git tag` has no reason to know about `pyproject.toml`. The release workflow
+  then built a signed, attested bundle of the wrong content. The script checks,
+  in order, that the tree is clean, that `main` matches `origin/main`, that
+  **`pyproject.toml` carries exactly the version asked for**, that both
+  CHANGELOG files have its entry, that the tag is free locally and on `origin`,
+  and that no lab in `validation-labs.json` is anything but VALIDE. It exits 1
+  on the first failed check and **2** when it could not measure, because
+  "I checked nothing" is not "all is well".
+
+### Fixed
+
+- The replication account of `mysql-07-repliquer` is renamed `repl` ->
+  **`replicator`**, the name `pg-09-repliquer` already teaches. The two labs
+  were each self-consistent, so no check had anything to say: a learner taking
+  both tracks simply learned two names for one concept. The statements, the
+  scenario, the reference solution and the test follow, and `setup.yaml` now
+  drops both names so a learner who played the previous version keeps no
+  orphan account. The lab was re-attested on `db1.lab` and `db2.lab`, 0 before
+  the work and 100 after.
+
+- Two more names diverged, found by applying that same rule to the whole
+  catalog. `mysql-02-client-admin` called its database `labdb` where the five
+  other MySQL labs call it `appli`, an outlier **inside** the track rather than
+  a difference between engines; its report field follows, `nb_tables_labdb` ->
+  `nb_tables_appli`. And `pg-03-configurer` wrote `rapport-config.txt` where
+  `mysql-03-configurer` writes `rapport-configuration.txt`, while every other
+  report of the catalog spells the word out (`installation`, `observation`,
+  `restauration`, `sauvegarde`). Both labs were re-attested, 0 before the work
+  and 100 after.
+
+- `README.md` and `README.fr.md` said six things the catalog no longer does.
+  They announced **nine encrypted solutions** where all seventeen are, a MySQL
+  track stopping at **level 1** where it now has three, **one** lab using a
+  second machine where `mysql-07-repliquer` is a second one, and a `lab.yaml`
+  declaring `fixtures` and `services` that this catalog never declares. The
+  clone command was still the skeleton's `<this repository>` placeholder.
+
+- The five-minute quickstart **provisioned nothing**, although all seventeen
+  labs are `vm` labs and the provider is declared as a list, which does not
+  resolve on its own. A learner following it to the letter could not play a
+  single lab: `run` had no machine to open a session on. It now runs
+  `dsoxlab use --provider kvm` and `dsoxlab provision` first, and gives the
+  machines back with `clean` and `destroy`.
+
+- The requirements now carry the machine table the sibling catalogs have, and
+  the declarative contract says that `meta.yml` holds the `infra:` block and
+  that the Terraform and cloud-init templates are packaged inside dsoxlab.
+
 ## [0.4.0] - 2026-10-20
 
 ### Added

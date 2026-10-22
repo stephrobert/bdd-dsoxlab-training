@@ -36,7 +36,7 @@ import pytest
 from conftest import lab_host, lab_target_host, message
 
 CIBLE = lab_target_host("db1.lab")
-RAPPORT = "/home/student/rapport-config.txt"
+RAPPORT = "/home/student/rapport-configuration.txt"
 PLACEHOLDER = "A_COMPLETER"
 SENTINELLE = "# Rapport de configuration de l'instance."
 TEMOIN = "temoin-pg-03"
