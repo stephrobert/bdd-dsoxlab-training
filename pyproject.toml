@@ -5,7 +5,7 @@
 
 [project]
 name = "bdd-dsoxlab-training"
-version = "0.4.2"
+version = "0.4.3"
 description = "Labs PostgreSQL et MySQL de la formation, joués par la CLI dsoxlab"
 requires-python = ">=3.11"
 dependencies = [
