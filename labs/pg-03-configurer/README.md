@@ -33,4 +33,4 @@ WAL archiving, which belongs to the backup lab.
 
 35 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/configuration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/configuration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/)

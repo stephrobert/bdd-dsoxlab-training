@@ -41,4 +41,4 @@ Credentials: the `labadmin` administration account on **both** servers,
 password `Adm1n!Lab2026`. The replication account to create will be called
 `replicator`, with password `R3pl!Lab2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/replication/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/replication/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/replication/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/replication/)

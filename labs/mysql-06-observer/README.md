@@ -72,4 +72,4 @@ in it. **Alerting** and metrology over time, which need a collector.
 
 40 minutes. Hints cost from 5 to 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/monitoring-maintenance/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/monitoring-maintenance/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/)

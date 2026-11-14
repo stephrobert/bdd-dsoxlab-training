@@ -19,4 +19,4 @@ and the rights must be separated: who creates, who writes, who reads.
 Mind a detail the guide points out: on Debian, `ssl = on` is already set.
 Turning SSL on will therefore change nothing, and it is not what is asked.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/securisation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/securisation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/)

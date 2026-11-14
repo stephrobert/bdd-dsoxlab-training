@@ -29,4 +29,4 @@ has no place on a table in service.
 
 40 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/monitoring-maintenance/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/monitoring-maintenance/)

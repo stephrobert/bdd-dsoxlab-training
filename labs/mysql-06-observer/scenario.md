@@ -31,4 +31,4 @@ hold. No test looks at a command you might have typed.
 
 Credentials: the `labadmin` administration account, password `Adm1n!Lab2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/monitoring-maintenance/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/monitoring-maintenance/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/)

@@ -30,4 +30,4 @@ A backup that has never been restored is not a backup: it is a file.
 Credentials: the `labadmin` administration account, password `Adm1n!Lab2026`.
 The `~/sauvegardes/` working directory is waiting for you, empty.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/sauvegarde-restauration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/sauvegarde-restauration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/backup-restore/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/backup-restore/)

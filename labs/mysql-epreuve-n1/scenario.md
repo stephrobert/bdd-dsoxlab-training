@@ -25,4 +25,4 @@ Credentials: the `labadmin` administration account, password `Adm1n!Lab2026`.
 The password of the service account to create is imposed by the brief, because
 a test has to be able to use it.
 
-The level's guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/)
+The level's guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/)

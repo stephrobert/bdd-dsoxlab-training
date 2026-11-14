@@ -39,4 +39,4 @@ the grade: `ssl = on`, set by Debian, and the revocation of `CREATE` on the
 
 40 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/securisation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/securisation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/)

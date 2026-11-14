@@ -25,4 +25,4 @@ The credentials: the `labadmin` administration account, password `Adm1n!Lab2026`
 The application account to create is `app_lecture`, with password
 `L3cture!2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/securisation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/securisation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/security/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/security/)
