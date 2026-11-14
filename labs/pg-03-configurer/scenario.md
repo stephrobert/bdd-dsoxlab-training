@@ -20,4 +20,4 @@ always succeeds, even when it leaves a parameter without effect.
 
 So you must know which apply, which wait, and prove it.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/configuration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/configuration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/)

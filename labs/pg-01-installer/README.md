@@ -20,7 +20,7 @@ repository (PGDG), and leave it as a service that starts at boot.
 
 - You can use `sudo` and `apt` on Debian.
 - The lesson
-  [Install PostgreSQL 18 from PGDG](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/installation/)
+  [Install PostgreSQL 18 from PGDG](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/installation/)
   explains each step. This lab does not repeat it.
 - Machine: `db1.lab` (2 vCPU, 2 GB, Debian 13). No account, no paid service.
 

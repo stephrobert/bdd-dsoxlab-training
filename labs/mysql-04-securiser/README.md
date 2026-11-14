@@ -50,4 +50,4 @@ which the guide covers.
 
 40 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/securisation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/securisation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/security/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/security/)

@@ -25,4 +25,4 @@ what the check will do.
 
 The credentials: the `labadmin` account, password `Adm1n!Lab2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/configuration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/configuration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/)

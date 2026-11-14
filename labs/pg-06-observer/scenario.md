@@ -21,4 +21,4 @@ table during an operation, and never re-enabled.
 Three moves, in this order: make the server observable, fix the query, reclaim
 the space.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/monitoring-maintenance/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/monitoring-maintenance/)

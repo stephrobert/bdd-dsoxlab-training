@@ -22,4 +22,4 @@ use for its scripts.
 
 The credentials: the `labadmin` account, password `Adm1n!Lab2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/prise-en-main-mysql-cli/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/prise-en-main-mysql-cli/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/mysql-cli/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/mysql-cli/)

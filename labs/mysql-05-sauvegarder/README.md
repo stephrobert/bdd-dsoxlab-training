@@ -80,4 +80,4 @@ restore a routine whose `DEFINER` is another account.
 
 35 minutes. Hints cost from 5 to 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/sauvegarde-restauration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/sauvegarde-restauration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/backup-restore/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/backup-restore/)

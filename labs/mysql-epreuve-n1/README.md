@@ -59,4 +59,4 @@ command.
 
 1h15.
 
-The level's guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/)
+The level's guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/)

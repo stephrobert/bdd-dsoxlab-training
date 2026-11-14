@@ -25,4 +25,4 @@ Finally, replication is not a backup: a `DROP TABLE` on the primary replicates
 in a few milliseconds. It protects against a machine failing, not against human
 error.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/replication/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/replication/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/replication/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/replication/)

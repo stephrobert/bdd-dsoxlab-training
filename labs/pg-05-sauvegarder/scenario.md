@@ -17,4 +17,4 @@ are global to the cluster, `pg_dump` ignores them, and a restore onto a fresh
 machine then fails on owners and privileges. Then restore for real, into a
 verification database, and compare.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/)
+The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/ (in French)](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/sauvegarde-restauration/) (in French)

@@ -20,4 +20,4 @@ Finally, you are asked for a four-line report on the instance's real state.
 The values will be compared with what the server answers: a plausible but
 wrong value will be rejected.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/psql-admin/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/psql-admin/)

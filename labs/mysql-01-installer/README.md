@@ -39,4 +39,4 @@ business.
 
 35 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/installation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/installation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/)

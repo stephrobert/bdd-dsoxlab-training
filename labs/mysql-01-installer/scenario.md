@@ -23,4 +23,4 @@ the **network**.
 
 The `root` password to set is `R00t!Lab2026`.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/installation/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/installation/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/)

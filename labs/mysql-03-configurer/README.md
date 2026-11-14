@@ -55,4 +55,4 @@ belongs to the backup lab.
 
 40 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/configuration/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/mysql/configuration/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/)

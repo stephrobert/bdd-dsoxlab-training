@@ -37,4 +37,4 @@ nothing.
 
 30 minutes. Hints cost between 5 and 20 points.
 
-The guide: [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/)
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/psql-admin/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/psql-admin/)
