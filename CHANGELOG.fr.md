@@ -9,6 +9,18 @@ un incrément MINEUR ajoute des labs, un CORRECTIF corrige un énoncé ou un tes
 sans changer ce qu'un lab prouve, et un incrément MAJEUR renomme ou retire des
 labs, ce qui casse la progression déjà enregistrée des apprenants.
 
+## [Non publié]
+
+### Modifié
+
+- **Le README et le CONTRIBUTING renvoient à la documentation du moteur au
+  lieu de la recopier** (dsoxlab#201). Les sections qui décrivaient le contrat
+  de `dsoxlab` et la vie d'un lab pointent désormais sur la documentation de
+  dsoxlab, qui reste juste quand le moteur change. Le conseil de lancer
+  `list-labs` avant `validate-structure` disparaît : il est faux depuis
+  dsoxlab 0.1.97, où `validate-structure` signale seul les labs qu'il ne peut
+  pas charger.
+
 ## [0.4.3] - 2026-10-23
 
 ### Ajouté
