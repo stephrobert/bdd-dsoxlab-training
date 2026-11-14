@@ -9,6 +9,17 @@ labs, a PATCH fixes a statement or a test without changing what a lab proves,
 and a MAJOR renames or removes labs, which breaks the progress already recorded
 by learners.
 
+## [Unreleased]
+
+### Changed
+
+- **The README and the CONTRIBUTING link to the engine documentation instead
+  of copying it** (dsoxlab#201). The sections that described the `dsoxlab`
+  contract and the life of a lab now point to the dsoxlab docs, which stay
+  true when the engine changes. The advice to run `list-labs` before
+  `validate-structure` is gone: it has been wrong since dsoxlab 0.1.97, where
+  `validate-structure` reports on its own the labs it cannot load.
+
 ## [0.4.3] - 2026-10-23
 
 ### Added
