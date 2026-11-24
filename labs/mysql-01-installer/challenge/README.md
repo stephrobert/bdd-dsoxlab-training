@@ -1,8 +1,37 @@
-# What is asked
+# A database put on the network without anyone meaning to
+
+## The situation
+
+`db1.lab` is a fresh Debian 13 machine. You are asked to put MySQL 8.4 LTS on
+it, the long-term support release, from Oracle's repository and not from
+Debian's, which ships MariaDB under similar names.
+
+So far, nothing remarkable. What is more remarkable is what the installation
+leaves behind.
+
+Oracle's packages lay down **no** `bind-address` line, not even a commented
+one. Yet that variable defaults to `*`, meaning every interface. At the end of
+an `apt install`, `mysqld` therefore listens on the network, on **two** ports:
+3306 for the classic protocol, 33060 for the X protocol.
+
+And there is a second level to the trap. `bind-address` does **not** restrict
+port 33060: the X protocol has its own variable. So you can set
+`bind-address = 127.0.0.1`, see `SELECT @@bind_address` answer `127.0.0.1`, and
+leave 33060 wide open.
+
+You are therefore asked to establish the real state rather than assume it, and
+to close both doors. A `root@localhost` account protects the **accounts**, not
+the **network**.
+
+The `root` password to set is `R00t!Lab2026`.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/installation/)
+
+## What is asked
 
 On `db1.lab`, a fresh Debian 13.
 
-## 1. Install MySQL 8.4 LTS from Oracle's repository
+### 1. Install MySQL 8.4 LTS from Oracle's repository
 
 The server must be version **8.4**, come from **Oracle's** repository and not
 Debian's, and its signing key must be Oracle's.
@@ -12,7 +41,7 @@ come back after a reboot is not in service.
 
 The `root` account's password must be `R00t!Lab2026`.
 
-## 2. Establish the real listening state, then close it
+### 2. Establish the real listening state, then close it
 
 At the end, `mysqld` must listen on the **loopback only**, on **both** its
 ports.
@@ -25,7 +54,7 @@ Mind the second port. `bind-address` does **not** restrict 33060: the X
 protocol has its own variable. Both must read `127.0.0.1`, and these variables
 do not change at runtime.
 
-## 3. Create a dedicated administration account
+### 3. Create a dedicated administration account
 
 An account `labadmin@localhost`, with password `Adm1n!Lab2026`, and all privileges
 including the right to grant them.
@@ -33,7 +62,7 @@ including the right to grant them.
 You do not work day to day as `root`: a dedicated account can be revoked
 without touching the fallback one.
 
-## 4. Fill in the report
+### 4. Fill in the report
 
 The `~/rapport-installation.txt` file holds three values to complete, all read
 from the server:
@@ -45,7 +74,7 @@ from the server:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check mysql-01-installer

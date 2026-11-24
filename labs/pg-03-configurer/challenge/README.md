@@ -1,9 +1,35 @@
-# What is asked
+# An instance that says nothing about what it does
+
+## The situation
+
+`db1.lab` has been running a PostgreSQL 18 instance in production for a week.
+The application writes to it, backups go through, nobody complains.
+
+This morning the application team reports intermittent slowness. You are asked
+which of its queries are slow. You open the logs: there is nothing. Not one
+query, not one connection, and the few lines present say neither when, nor who,
+nor on which database. The instance runs with factory logging settings, which
+trace almost nothing.
+
+`max_connections` also needs raising, as the application will saturate it at
+the next tier.
+
+One constraint, and it is the whole subject: **the application must not lose a
+single session.** A restart is out of the question. Yet among the parameters you
+must set, some take effect as soon as the server rereads its files, and one
+waits for nothing less than its next start. Nothing will tell you: a reload
+always succeeds, even when it leaves a parameter without effect.
+
+So you must know which apply, which wait, and prove it.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/configuration/)
+
+## What is asked
 
 On `db1.lab`. The log collector is **already on**: it is postmaster-context, so
 turning it on would have required a restart, and this lab forbids that.
 
-## 1. Make the logs usable
+### 1. Make the logs usable
 
 Three parameters, all reloadable, which must be **effective** on the running
 server:
@@ -16,7 +42,7 @@ server:
 "Effective" means read from `pg_settings`, not written in a file. A parameter
 present in `postgresql.auto.conf` but never reloaded does not count.
 
-## 2. Prepare the `max_connections` raise
+### 2. Prepare the `max_connections` raise
 
 `max_connections` must be **200** in the configuration, and the server must
 still be running **with 100**, pending its next start.
@@ -24,7 +50,7 @@ still be running **with 100**, pending its next start.
 That is the normal state of a postmaster-context parameter just changed, and it
 is what the lab asks for: the restart window is scheduled for tonight, not now.
 
-## 3. Cut nobody
+### 3. Cut nobody
 
 The server **must not have restarted**. A session opened by the setup carries
 the application name `temoin-pg-03`: it must still be there. A restart kills it,
@@ -33,7 +59,7 @@ and the test sees that.
 A `systemctl restart`, a `pg_ctl restart` or a `reboot` therefore fail the lab,
 even if every parameter is right.
 
-## 4. Fill in the report
+### 4. Fill in the report
 
 The `~/rapport-configuration.txt` file holds three values to complete, all read from
 the server:
@@ -46,7 +72,7 @@ the server:
 **Edit the file in place.** Its header must survive: it disappears if you
 recreate the file with a `>` redirection, and the test refuses that.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check pg-03-configurer

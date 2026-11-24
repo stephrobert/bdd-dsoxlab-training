@@ -1,4 +1,51 @@
-# What is asked
+# Two servers ignoring each other, and a backup that is no longer enough
+
+## The situation
+
+`db1.lab` serves the `appli` database in production. `db2.lab` exists, MySQL
+runs on it, and the two servers do not know each other.
+
+The replica has already received a **copy** of the database, restored from
+yesterday's backup: it holds the same tables and the same rows. That is a given
+of this lab, and it is no detail: a replica never starts from nothing. Without
+that copy, its applier thread stops on the first transaction with an error
+`1049`, "Unknown database", measured.
+
+The nightly backup protects against an accidental deletion, it does not protect
+against a hardware failure: by the time you restore, the service is down. So
+you are asked for a **replica**, which follows the source continuously and can
+be promoted.
+
+Three things to know before you start, and the first two will cost you an error
+if you ignore them.
+
+**`gtid_mode` refuses to go from OFF to ON in one step.** The server answers an
+error `1788` that names the path, and it adds that the value must be stepped up
+**simultaneously on all servers**. Read the message, it says everything.
+
+**The default authentication plugin blocks the replica's connection.** With
+`caching_sha2_password`, the replica stays in `CONNECTING` on an error `2061`
+mentioning "secure connection", and it retries every 60 seconds. It is neither
+the password nor the privileges.
+
+**`SHOW REPLICA STATUS` is a display, not a proof.** The check reads the
+Performance Schema **state tables**, and above all it writes a row on the
+source then looks for it on the replica. A replication that reports `ON`
+without carrying anything exists, and that is the failure you do not see.
+
+**And do not configure the channel on the `db1.lab` name.** Measured on this
+infrastructure: from `db2`, that name resolves to a machine on **another lab
+network**, not to the source. Read the source's address **on the source**, for
+instance with `ip -4 addr show`, and use that. You do not configure a
+replication on a name you have not checked.
+
+Credentials: the `labadmin` administration account on **both** servers,
+password `Adm1n!Lab2026`. The replication account to create will be called
+`replicator`, with password `R3pl!Lab2026`.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/replication/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/replication/)
+
+## What is asked
 
 Two machines. `db1.lab` is the **source**, it holds the `appli` database and
 its `clients` table. `db2.lab` is the future **replica**: MySQL runs on it, it
@@ -10,7 +57,7 @@ That copy is not scenery. Without it, the replica's applier thread stops on the
 first transaction with an error `1049`, "Unknown database": a replica follows a
 database, it does not create one.
 
-## 1. Turn GTID on, on both servers
+### 1. Turn GTID on, on both servers
 
 `gtid_mode` must be `ON` and so must `enforce_gtid_consistency`, **on the
 source and on the replica**.
@@ -19,13 +66,13 @@ Mind this: `gtid_mode` **refuses to go from OFF to ON in one step**. The server
 answers an error `1788` that names the path, and adds that the value must be
 stepped up simultaneously on all servers. Read the message, it says everything.
 
-## 2. Create the replication account, and only what it needs
+### 2. Create the replication account, and only what it needs
 
 A `replicator` account with password `R3pl!Lab2026`, reachable from the replica,
 holding `REPLICATION SLAVE` and **nothing more**. A global `SELECT` would give
 it the `mysql` database and its password hashes.
 
-## 3. Connect the replica, and get it running
+### 3. Connect the replica, and get it running
 
 The channel is created by `CHANGE REPLICATION SOURCE TO`, with automatic
 positioning, then `START REPLICA`.
@@ -55,7 +102,7 @@ retries every 60 seconds. It is neither the password nor the privileges. Two
 ways out exist, one gives the channel TLS, the other makes it fetch the
 source's public key.
 
-## 4. Forbid direct writes on the replica
+### 4. Forbid direct writes on the replica
 
 `super_read_only` must be on, and an `INSERT` from `labadmin` must be
 **refused**. `read_only` alone is not enough: it lets through accounts holding
@@ -64,13 +111,13 @@ every privilege.
 Rest assured, it is measured: `super_read_only` does **not** prevent the
 applier thread from playing the transactions coming from the source.
 
-## 5. Prove a row travels
+### 5. Prove a row travels
 
 The check writes a row on the source and looks for it on the replica. No state
 table replaces that proof: a replication that reports `ON` without carrying
 anything exists.
 
-## 6. Fill in the report
+### 6. Fill in the report
 
 The `~/rapport-replication.txt` file, on the source, holds three values:
 
@@ -81,7 +128,7 @@ The `~/rapport-replication.txt` file, on the source, holds three values:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check mysql-07-repliquer

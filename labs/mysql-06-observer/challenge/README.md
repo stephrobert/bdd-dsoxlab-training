@@ -1,4 +1,41 @@
-# What is asked
+# A purged table that gave nothing back, and a query that reads everything
+
+## The situation
+
+The instance on `db1.lab` serves the `appli` database. Its `evenements` table
+received 200,000 rows of application log, then the monthly purge deleted nine
+out of ten. 20,000 are left.
+
+The disk gave nothing back. The table still occupies what it occupied before
+the purge, and the operator who ran the `DELETE` thought the job was done.
+
+And a query the dashboard calls every minute reads the table **whole** every
+time:
+
+```sql
+SELECT COUNT(*) FROM evenements WHERE service = 'svc-7';
+```
+
+An index does exist on that table. It does not serve this query, and nothing in
+the catalog says so: `SHOW INDEX` displays an index, the operator concludes the
+table is indexed, and the plan keeps reading everything.
+
+You are asked for three things, and the third is the one people forget:
+
+1. that the dashboard query **stops reading the table whole**;
+2. that the table **gives back the space** the purge did not;
+3. that this query be **findable** in the server's diagnostic views, under its
+   database name.
+
+Everything is graded on the real state: the **execution plan** the server
+reports, the **size** the table really occupies, and what the diagnostic views
+hold. No test looks at a command you might have typed.
+
+Credentials: the `labadmin` administration account, password `Adm1n!Lab2026`.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/monitoring-maintenance/)
+
+## What is asked
 
 On `db1.lab`. The `appli` database holds an `evenements` table of 20,000 rows,
 what is left of a purge that deleted 180,000. The `labadmin` account exists
@@ -10,7 +47,7 @@ The dashboard query, the one to make fast:
 SELECT COUNT(*) FROM evenements WHERE service = 'svc-7';
 ```
 
-## 1. Make the plan stop reading the table whole
+### 1. Make the plan stop reading the table whole
 
 `EXPLAIN` must report something other than `ALL` for this query, and examine
 far fewer rows than the table holds.
@@ -18,7 +55,7 @@ far fewer rows than the table holds.
 Mind this: **an index already exists** on that table. It does not serve this
 query, and `SHOW INDEX` does not say so. The plan decides, not the catalog.
 
-## 2. Reclaim the space the purge did not give back
+### 2. Reclaim the space the purge did not give back
 
 The table still occupies what it occupied with its 200,000 rows. It must come
 back under **20 MB**, without losing a single one of the 20,000 remaining rows.
@@ -35,7 +72,7 @@ SELECT ROUND((data_length + index_length) / 1024 / 1024) AS mo
  WHERE table_schema = 'appli' AND table_name = 'evenements';
 ```
 
-## 3. Make the query findable under its database
+### 3. Make the query findable under its database
 
 A `SELECT` citing `evenements`, with its filter, must appear in
 `sys.statement_analysis` for `db = 'appli'`.
@@ -44,7 +81,7 @@ This is the lab's operational trap: a query run **without a database
 selected** is recorded with a **null** schema, and so never shows up when you
 look for "the costly queries of this database".
 
-## 4. Fill in the report
+### 4. Fill in the report
 
 The `~/rapport-observation.txt` file holds three values to fill in:
 
@@ -54,7 +91,7 @@ The `~/rapport-observation.txt` file holds three values to fill in:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check mysql-06-observer

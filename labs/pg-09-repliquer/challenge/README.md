@@ -1,9 +1,40 @@
-# What is asked
+# A single machine carries production
+
+## The situation
+
+`db1.lab` carries the `facturation` database, and it carries it alone. Backups
+are in place, log archiving too: we know how to come back after an incident.
+What we cannot do is carry on during one.
+
+`db2.lab` is available, with PostgreSQL installed and an empty cluster running
+for nothing.
+
+You are asked to turn it into a **streaming standby**: a copy that follows the
+primary continuously, ready to take over, and which can already be queried for
+reads to relieve reporting.
+
+Three precautions, and they are not comfort details.
+
+The standby must authenticate against the primary. Using `postgres` for that
+would store a superuser password on the second machine, and would open full
+access to the primary if it were compromised.
+
+The primary must **retain** the logs the standby needs. Without that, a standby
+disconnected for a few hours wakes up to recycled logs, and everything must be
+started over.
+
+Finally, replication is not a backup: a `DROP TABLE` on the primary replicates
+in a few milliseconds. It protects against a machine failing, not against human
+error.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/replication/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/replication/)
+
+## What is asked
 
 Two machines. `db1.lab` carries the `facturation` database; `db2.lab` has
 PostgreSQL installed and an empty cluster running.
 
-## 1. Prepare the primary
+### 1. Prepare the primary
 
 On `db1.lab`:
 
@@ -19,7 +50,7 @@ On `db1.lab`:
 Mind this: replication is a virtual database. A `pg_hba` line whose database
 column reads `all` does **not** allow it.
 
-## 2. Build the standby
+### 2. Build the standby
 
 On `db2.lab`, replace the empty cluster with a copy of the primary, and start it
 in standby mode.
@@ -29,7 +60,7 @@ has already laid a cluster there, and `pg_basebackup` refuses to write over it.
 
 The standby must use the slot created in step 1.
 
-## 3. Prove the data flows
+### 3. Prove the data flows
 
 At the end:
 
@@ -39,7 +70,7 @@ At the end:
 - and above all: a row written on the primary must appear on the standby. It is
   the only check that proves anything.
 
-## 4. Fill in the report
+### 4. Fill in the report
 
 The `~/rapport-replication.txt` file, **on `db1.lab`**, holds three values:
 
@@ -51,7 +82,7 @@ The `~/rapport-replication.txt` file, **on `db1.lab`**, holds three values:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check pg-09-repliquer

@@ -1,14 +1,45 @@
-# What is asked
+# An instance tuned for a laptop
+
+## The situation
+
+`db1.lab` runs MySQL 8.4, installed and reachable. Its settings, though, are
+still the package's.
+
+The InnoDB buffer pool is **128 MB**, the compiled default. It is the cache
+that avoids disk reads, and on a machine with several gigabytes that is absurd.
+The connection ceiling is 151, and the application will ask for more at the
+next tier.
+
+Above all, the slow query log is **off**. One day you will be asked which query
+is slowing the application down, and there will be nothing to read.
+
+So you are asked to set all three, and to make it **survive a restart**. That
+last point is not a formality: MySQL offers three ways to change a variable,
+and two of them lose the setting at the next start without saying so.
+
+One server table, `performance_schema.persisted_variables`, does say what has
+been persisted, and that is useful. But it reflects what the server **meant**
+to write rather than the file's state: empty that file behind its back and the
+table keeps reporting the value. So it proves the intent, not the round trip.
+
+The only way to know whether a value will come back is to restart, so that is
+what the check will do.
+
+The credentials: the `labadmin` account, password `Adm1n!Lab2026`.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/](https://www.stephane-robert.info/en/docs/databases/relational/mysql/configuration/)
+
+## What is asked
 
 On `db1.lab`. MySQL 8.4 is running, the `labadmin` account exists with password
 `Adm1n!Lab2026`, and a `lab` login path is already in place for `student`.
 
-## 1. Raise memory and connections
+### 1. Raise memory and connections
 
 - `innodb_buffer_pool_size` must be **at least 512 MB**;
 - `max_connections` must be **at least 300**.
 
-## 2. Turn the slow query log on
+### 2. Turn the slow query log on
 
 - `slow_query_log` on;
 - `long_query_time` at **1** second;
@@ -17,7 +48,7 @@ On `db1.lab`. MySQL 8.4 is running, the `labadmin` account exists with password
 It is not enough for the variables to be set: a slow query must **actually**
 appear in the file. The test will run one.
 
-## 3. Make all of it survive a restart
+### 3. Make all of it survive a restart
 
 This is the heart of the lab. The test **will stop and start** the server, then
 reread the three settings.
@@ -34,7 +65,7 @@ And before restarting, make sure your configuration is valid: MySQL ships a way
 to check it without starting the server. A refused configuration leaves the
 instance down.
 
-## 4. Fill in the report
+### 4. Fill in the report
 
 The `~/rapport-configuration.txt` file holds three values to complete, all read
 from the server **after** its restart:
@@ -47,7 +78,7 @@ from the server **after** its restart:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check mysql-03-configurer
