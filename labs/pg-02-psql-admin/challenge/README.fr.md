@@ -1,8 +1,35 @@
-# Ce qui est demandé
+# L'instance tourne, et personne ne peut s'en servir
+
+## La situation
+
+PostgreSQL 18 est installé sur `db1.lab` et le service démarre au boot. Le rôle
+applicatif `appli` existe avec son mot de passe, la base `facturation` lui
+appartient. Sur le papier, tout est prêt.
+
+L'équipe qui doit livrer l'application vient de te dire que rien ne marche.
+Depuis leur machine, `psql` reste sans réponse. Depuis `db1` elle-même, en
+`postgres`, tout va bien.
+
+Tu as trois choses à régler, et elles vivent à trois endroits différents : le
+serveur n'écoute que sa propre boucle locale, il ne sait pas qui accepter
+depuis le réseau, et aucun client ne peut s'authentifier sans qu'un humain
+tape un mot de passe, ce qu'un script ne fera jamais.
+
+Ensuite, l'application a besoin de ses objets : un schéma, une table, et de
+quoi vérifier qu'elle écrit bien. Ils doivent appartenir au rôle du service,
+pas au superutilisateur.
+
+Enfin, on te demande un rapport de quatre lignes sur l'état réel de
+l'instance. Les valeurs seront confrontées à ce que le serveur répond : une
+valeur plausible mais fausse sera refusée.
+
+Le guide : [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/prise-en-main-psql/)
+
+## Ce qui est demandé
 
 Sur `db1.lab`, depuis le compte `student`.
 
-## 1. Rendre l'instance joignable depuis le réseau
+### 1. Rendre l'instance joignable depuis le réseau
 
 Le serveur doit écouter sur sa boucle locale **et** sur son adresse privée.
 Une connexion réseau vers la base `facturation` avec le rôle `appli` doit être
@@ -11,7 +38,7 @@ acceptée, par une méthode qui ne transporte pas le mot de passe en clair.
 `trust` et `password` sont refusés sur une ligne réseau : le premier n'exige
 rien, le second envoie le mot de passe tel quel.
 
-## 2. Permettre à un script de se connecter sans mot de passe tapé
+### 2. Permettre à un script de se connecter sans mot de passe tapé
 
 Pose le fichier de mots de passe de `student` pour le rôle `appli`. Il doit
 être réellement pris en compte par psql, ce qui dépend autant de ses
@@ -24,14 +51,14 @@ La preuve attendue : depuis le compte `student`, sans variable
 psql -h <adresse-privée> -U appli -d facturation -At -c 'select 1' < /dev/null
 ```
 
-## 3. Créer les objets du service
+### 3. Créer les objets du service
 
 Dans la base `facturation` : un schéma `appli`, et dedans une table `clients`
 portant au moins les colonnes `id` et `nom`, avec **au moins deux lignes**.
 
 La table doit appartenir au rôle `appli`, pas à `postgres`.
 
-## 4. Remplir le rapport
+### 4. Remplir le rapport
 
 Le fichier `~/rapport-psql.txt` porte quatre lignes à compléter. Lis les
 valeurs sur le serveur, ne les devine pas : elles sont comparées à ce qu'il
@@ -45,7 +72,7 @@ répond.
 **Édite le fichier sur place.** Son en-tête doit survivre : il disparaît si tu
 recrées le fichier avec une redirection `>`, et le test le refuse.
 
-## Vérifier
+### Vérifier
 
 ```bash
 dsoxlab check pg-02-psql-admin

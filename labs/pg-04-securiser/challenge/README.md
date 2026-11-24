@@ -1,9 +1,34 @@
-# What is asked
+# Encrypted "when the client feels like it"
+
+## The situation
+
+The internal audit went through `db1.lab`. Two findings, and they are more
+alike than they look.
+
+The first: the application's connections **can** be encrypted, but nothing
+requires it. The network line in `pg_hba.conf` is a `host`, which accepts an
+encrypted and a cleartext session alike. So the client decides, and a
+misconfigured client never notices. The certificate presented is the one Debian
+laid down at install time, the same one on every machine in the estate.
+
+The second: the `appli` role **owns** its schema and its tables. It can
+therefore drop them, and the application runs with that right at all times. A
+reporting tool that only reads connects with the same role, for want of another.
+
+You are asked to close both. The server must refuse an unencrypted connection,
+and the rights must be separated: who creates, who writes, who reads.
+
+Mind a detail the guide points out: on Debian, `ssl = on` is already set.
+Turning SSL on will therefore change nothing, and it is not what is asked.
+
+The guide: [https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/](https://www.stephane-robert.info/en/docs/databases/relational/postgresql/security/)
+
+## What is asked
 
 On `db1.lab`. The instance is running, listens on the network, and a `host`
 line already accepts the `appli` role on the `facturation` database.
 
-## 1. Put a dedicated certificate in place
+### 1. Put a dedicated certificate in place
 
 The server must present a certificate of its own, not the one Debian lays down
 at install time (`ssl-cert-snakeoil`). Its common name (`CN`) must be `db1.lab`.
@@ -15,7 +40,7 @@ subject.
 The server must then actually present that certificate, not merely hold it on
 disk.
 
-## 2. Refuse cleartext connections
+### 2. Refuse cleartext connections
 
 An **unencrypted** network connection to `facturation` must be **refused**, and
 an encrypted one must succeed.
@@ -34,7 +59,7 @@ PGSSLMODE=require psql -h <private-address> -U appli -d facturation \
 Leave the `local` lines alone: the tests and administration go through the
 socket.
 
-## 3. Separate the rights
+### 3. Separate the rights
 
 Three group roles, **with no login right**: `app_owner`, `app_writer`,
 `app_reader`.
@@ -46,13 +71,13 @@ Three group roles, **with no login right**: `app_owner`, `app_writer`,
 - the `appli` login role is a member of `app_writer`, and no longer owns
   anything.
 
-## 4. Provide for future tables
+### 4. Provide for future tables
 
 A table created **later** by `app_owner` in the `appli` schema must grant its
 rights to the other two roles by itself, with no intervention. Otherwise
 everything is right today and wrong at the first migration.
 
-## 5. Fill in the report
+### 5. Fill in the report
 
 The `~/rapport-securite.txt` file holds three values to complete, all read from
 the server:
@@ -64,7 +89,7 @@ the server:
 
 **Edit the file in place.** Its header must survive.
 
-## Check
+### Check
 
 ```bash
 dsoxlab check pg-04-securiser

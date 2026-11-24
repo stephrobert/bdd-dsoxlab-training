@@ -1,9 +1,37 @@
-# Ce qui est demandé
+# Une requête lente, et rien pour le dire
+
+## La situation
+
+L'application se plaint d'une page qui met plusieurs secondes à répondre. Elle
+interroge la table `appli.journal`, qui porte cent mille lignes.
+
+Tu te connectes sur `db1.lab` pour voir quelles requêtes coûtent cher. Il n'y a
+rien à voir : l'extension qui collecte ces statistiques n'est pas chargée. Le
+serveur travaille, et ne garde aucune trace de ce qu'il a fait.
+
+Tu finis par trouver la requête dans le code de l'application :
+
+```sql
+select count(*) from appli.journal where client_id = 42
+```
+
+Il reste un second problème, que personne n'a signalé parce qu'il ne se voit
+pas depuis l'application : une purge a supprimé des dizaines de milliers de
+lignes de cette table, et l'espace qu'elles occupaient n'a jamais été rendu.
+L'autovacuum a été désactivé sur cette table lors d'une opération, et jamais
+réactivé.
+
+Trois gestes, dans cet ordre : rendre le serveur observable, corriger la
+requête, récupérer l'espace.
+
+Le guide : [https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/](https://www.stephane-robert.info/docs/services/bdd/relationnelles/postgresql/monitoring-maintenance/)
+
+## Ce qui est demandé
 
 Sur `db1.lab`. La base `facturation` porte la table `appli.journal`, cent mille
 lignes, dont des dizaines de milliers sont mortes.
 
-## 1. Rendre le serveur observable
+### 1. Rendre le serveur observable
 
 L'extension `pg_stat_statements` doit être **chargée par le serveur** et
 **créée dans la base** `facturation`.
@@ -14,7 +42,7 @@ créée ne donne aucune vue à interroger.
 
 Un redémarrage est autorisé ici, contrairement au lab de configuration.
 
-## 2. Corriger la requête
+### 2. Corriger la requête
 
 Cette requête doit cesser d'être lue séquentiellement :
 
@@ -29,7 +57,7 @@ planificateur n'emploie pas ne compte donc pas.
 Pense à ce dont le planificateur a besoin pour choisir : des statistiques à
 jour.
 
-## 3. Récupérer l'espace mort
+### 3. Récupérer l'espace mort
 
 Les lignes mortes de `appli.journal` doivent être récupérées : il doit en
 rester moins de **1 %** des lignes vivantes.
@@ -37,7 +65,7 @@ rester moins de **1 %** des lignes vivantes.
 `VACUUM FULL` est à éviter : il prend un verrou exclusif, donc il coupe le
 service. Un `VACUUM` ordinaire suffit à rendre l'espace réutilisable.
 
-## 4. Remplir le rapport
+### 4. Remplir le rapport
 
 Le fichier `~/rapport-observation.txt` porte trois valeurs à compléter :
 
@@ -48,7 +76,7 @@ Le fichier `~/rapport-observation.txt` porte trois valeurs à compléter :
 
 **Édite le fichier sur place.** Son en-tête doit survivre.
 
-## Vérifier
+### Vérifier
 
 ```bash
 dsoxlab check pg-06-observer
